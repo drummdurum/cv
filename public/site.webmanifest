@@ -1,0 +1,15 @@
+{
+  "name": "Sebastian Drumm - Full Stack Developer",
+  "short_name": "Sebastian Drumm",
+  "description": "CV og Portfolio for Sebastian Drumm - Full Stack Developer",
+  "icons": [
+    {
+      "src": "/favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
+  ],
+  "theme_color": "#e8dcc4",
+  "background_color": "#e8dcc4",
+  "display": "standalone"
+}

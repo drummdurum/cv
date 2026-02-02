@@ -24,15 +24,27 @@ const renderWithLayout = async (viewName, options, res) => {
 
 // Routes
 app.get('/', async (req, res) => {
-  await renderWithLayout('index', { page: 'forside', title: 'Sebastian Drumm - Forside' }, res);
+  await renderWithLayout('index', { 
+    page: 'forside', 
+    title: 'Sebastian Drumm - Full Stack Developer | CV & Portfolio',
+    canonicalPath: '/'
+  }, res);
 });
 
 app.get('/jobs', async (req, res) => {
-  await renderWithLayout('jobs', { page: 'jobs', title: 'Sebastian Drumm - Erfaring' }, res);
+  await renderWithLayout('jobs', { 
+    page: 'jobs', 
+    title: 'Sebastian Drumm - Erhvervserfaring & Uddannelse',
+    canonicalPath: '/jobs'
+  }, res);
 });
 
 app.get('/fritid', async (req, res) => {
-  await renderWithLayout('fritid', { page: 'fritid', title: 'Sebastian Drumm - Fritid' }, res);
+  await renderWithLayout('fritid', { 
+    page: 'fritid', 
+    title: 'Sebastian Drumm - Fritid & Interesser',
+    canonicalPath: '/fritid'
+  }, res);
 });
 
 app.listen(PORT, () => {

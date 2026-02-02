@@ -3,7 +3,62 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title><%= typeof title !== 'undefined' ? title : 'Sebastian Drumm - CV' %></title>
+  <title><%= typeof title !== 'undefined' ? title : 'Sebastian Drumm - Full Stack Developer' %></title>
+  
+  <!-- Favicons -->
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="manifest" href="/site.webmanifest">
+  
+  <!-- SEO Meta Tags -->
+  <meta name="description" content="Sebastian Drumm - Full Stack Developer og Professionsbachelor studerende. Erfaring med Node.js, Express, WordPress, PostgreSQL, og moderne webudvikling. Se mine projekter og erhvervserfaring.">
+  <meta name="keywords" content="Sebastian Drumm, Full Stack Developer, Web Developer, Node.js, Express, JavaScript, WordPress, Datamatiker, KEA, København, Backend Developer, Frontend Developer">
+  <meta name="author" content="Sebastian Drumm">
+  <meta name="robots" content="index, follow">
+  <link rel="canonical" href="https://www.sebastiandrumm.dk<%= typeof canonicalPath !== 'undefined' ? canonicalPath : '/' %>">
+  
+  <!-- Open Graph / Facebook -->
+  <meta property="og:type" content="website">
+  <meta property="og:url" content="https://www.sebastiandrumm.dk<%= typeof canonicalPath !== 'undefined' ? canonicalPath : '/' %>">
+  <meta property="og:title" content="<%= typeof title !== 'undefined' ? title : 'Sebastian Drumm - Full Stack Developer' %>">
+  <meta property="og:description" content="Full Stack Developer og Professionsbachelor studerende. Erfaring med Node.js, Express, WordPress, og moderne webudvikling.">
+  <meta property="og:image" content="https://www.sebastiandrumm.dk/filer/billedere/software-2979919_1920.jpg">
+  <meta property="og:locale" content="da_DK">
+  <meta property="og:site_name" content="Sebastian Drumm - CV">
+  
+  <!-- Twitter Card -->
+  <meta name="twitter:card" content="summary_large_image">
+  <meta name="twitter:url" content="https://www.sebastiandrumm.dk<%= typeof canonicalPath !== 'undefined' ? canonicalPath : '/' %>">
+  <meta name="twitter:title" content="<%= typeof title !== 'undefined' ? title : 'Sebastian Drumm - Full Stack Developer' %>">
+  <meta name="twitter:description" content="Full Stack Developer og Professionsbachelor studerende. Erfaring med Node.js, Express, WordPress, og moderne webudvikling.">
+  <meta name="twitter:image" content="https://www.sebastiandrumm.dk/filer/billedere/software-2979919_1920.jpg">
+  
+  <!-- Structured Data (JSON-LD) -->
+  <script type="application/ld+json">
+  {
+    "@context": "https://schema.org",
+    "@type": "Person",
+    "name": "Sebastian Drumm",
+    "jobTitle": "Full Stack Developer",
+    "url": "https://www.sebastiandrumm.dk",
+    "email": "sedrumm@gmail.com",
+    "telephone": "+4522263888",
+    "address": {
+      "@type": "PostalAddress",
+      "addressCountry": "DK",
+      "addressLocality": "København"
+    },
+    "alumniOf": {
+      "@type": "EducationalOrganization",
+      "name": "KEA - Københavns Erhvervsakademi"
+    },
+    "knowsAbout": ["Node.js", "Express", "JavaScript", "WordPress", "PostgreSQL", "API Development", "Full Stack Development"],
+    "sameAs": [
+      "https://github.com/drummdurum",
+      "https://www.linkedin.com/in/sebastian-drumm-01b6352b3/"
+    ]
+  }
+  </script>
+  
   <link rel="stylesheet" href="/css/output.css">
 </head>
 <body class="bg-sand min-h-screen">
