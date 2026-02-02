@@ -6,7 +6,7 @@
   <title><%= typeof title !== 'undefined' ? title : 'Sebastian Drumm - CV' %></title>
   <link rel="stylesheet" href="/css/output.css">
 </head>
-<body class="bg-gray-50 min-h-screen">
+<body class="bg-sand min-h-screen">
   <!-- Navigation -->
   <nav class="bg-sand shadow-lg sticky top-0 z-50">
     <div class="max-w-6xl mx-auto px-4">
@@ -19,9 +19,9 @@
           </div>
         </div>
         <div class="hidden md:flex items-center space-x-1">
-          <a href="/" class="py-4 px-4 <%= page === 'forside' ? 'text-gray-900 border-b-4 border-gray-900' : 'text-gray-700 hover:text-gray-900' %> font-semibold transition duration-300">Forside</a>
-          <a href="/jobs" class="py-4 px-4 <%= page === 'jobs' ? 'text-gray-900 border-b-4 border-gray-900' : 'text-gray-700 hover:text-gray-900' %> font-semibold transition duration-300">Erfaring</a>
-          <a href="/fritid" class="py-4 px-4 <%= page === 'fritid' ? 'text-gray-900 border-b-4 border-gray-900' : 'text-gray-700 hover:text-gray-900' %> font-semibold transition duration-300">Fritid</a>
+          <a href="/" class="py-4 px-4 border-b-4 <%= page === 'forside' ? 'text-gray-900 border-gray-900' : 'text-gray-700 border-transparent nav-link' %> font-semibold transition duration-300 relative">Forside</a>
+          <a href="/jobs" class="py-4 px-4 border-b-4 <%= page === 'jobs' ? 'text-gray-900 border-gray-900' : 'text-gray-700 border-transparent nav-link' %> font-semibold transition duration-300 relative">Erfaring</a>
+          <a href="/fritid" class="py-4 px-4 border-b-4 <%= page === 'fritid' ? 'text-gray-900 border-gray-900' : 'text-gray-700 border-transparent nav-link' %> font-semibold transition duration-300 relative">Fritid</a>
         </div>
         <!-- Mobile menu button -->
         <div class="md:hidden flex items-center">
@@ -40,11 +40,11 @@
       </div>
     </div>
     <!-- Mobile menu -->
-    <div class="hidden mobile-menu md:hidden">
-      <ul class="">
-        <li><a href="/" class="block text-sm px-2 py-4 <%= page === 'forside' ? 'bg-primary text-white' : 'hover:bg-primary hover:text-white' %> transition duration-300">Forside</a></li>
-        <li><a href="/jobs" class="block text-sm px-2 py-4 <%= page === 'jobs' ? 'bg-primary text-white' : 'hover:bg-primary hover:text-white' %> transition duration-300">Erfaring</a></li>
-        <li><a href="/fritid" class="block text-sm px-2 py-4 <%= page === 'fritid' ? 'bg-primary text-white' : 'hover:bg-primary hover:text-white' %> transition duration-300">Fritid</a></li>
+    <div class="hidden mobile-menu md:hidden bg-sand border-t border-gray-300">
+      <ul class="py-2">
+        <li><a href="/" class="block text-base px-6 py-3 <%= page === 'forside' ? 'text-gray-900 font-bold border-l-4 border-gray-900 bg-gray-100' : 'text-gray-700' %> transition duration-300 relative mobile-nav-link">Forside</a></li>
+        <li><a href="/jobs" class="block text-base px-6 py-3 <%= page === 'jobs' ? 'text-gray-900 font-bold border-l-4 border-gray-900 bg-gray-100' : 'text-gray-700' %> transition duration-300 relative mobile-nav-link">Erfaring</a></li>
+        <li><a href="/fritid" class="block text-base px-6 py-3 <%= page === 'fritid' ? 'text-gray-900 font-bold border-l-4 border-gray-900 bg-gray-100' : 'text-gray-700' %> transition duration-300 relative mobile-nav-link">Fritid</a></li>
       </ul>
     </div>
   </nav>
@@ -72,6 +72,32 @@
       </div>
     </div>
   </footer>
+
+  <style>
+    /* Desktop nav hover - kun color change */
+    .nav-link:hover {
+      color: #111827;
+    }
+    
+    /* Mobile nav hover underline animation */
+    .mobile-nav-link::before {
+      content: '';
+      position: absolute;
+      left: 0;
+      bottom: 0;
+      width: 0;
+      height: 2px;
+      background-color: #111827;
+      transition: width 0.3s ease;
+    }
+    .mobile-nav-link:hover::before {
+      width: 100%;
+    }
+    .mobile-nav-link:hover {
+      color: #111827;
+      background-color: rgba(243, 244, 246, 0.5);
+    }
+  </style>
 
   <script>
     // Mobile menu toggle
