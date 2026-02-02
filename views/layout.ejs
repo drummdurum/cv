@@ -1,0 +1,86 @@
+<!DOCTYPE html>
+<html lang="da">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title><%= typeof title !== 'undefined' ? title : 'Sebastian Drumm - CV' %></title>
+  <link rel="stylesheet" href="/css/output.css">
+</head>
+<body class="bg-gray-50 min-h-screen">
+  <!-- Navigation -->
+  <nav class="bg-sand shadow-lg sticky top-0 z-50">
+    <div class="max-w-6xl mx-auto px-4">
+      <div class="flex justify-between items-center py-4">
+        <div class="flex space-x-7">
+          <div>
+            <a href="/" class="flex items-center py-4 px-2">
+              <span class="font-bold text-2xl text-gray-900">Sebastian Drumm</span>
+            </a>
+          </div>
+        </div>
+        <div class="hidden md:flex items-center space-x-1">
+          <a href="/" class="py-4 px-4 <%= page === 'forside' ? 'text-gray-900 border-b-4 border-gray-900' : 'text-gray-700 hover:text-gray-900' %> font-semibold transition duration-300">Forside</a>
+          <a href="/jobs" class="py-4 px-4 <%= page === 'jobs' ? 'text-gray-900 border-b-4 border-gray-900' : 'text-gray-700 hover:text-gray-900' %> font-semibold transition duration-300">Erfaring</a>
+          <a href="/fritid" class="py-4 px-4 <%= page === 'fritid' ? 'text-gray-900 border-b-4 border-gray-900' : 'text-gray-700 hover:text-gray-900' %> font-semibold transition duration-300">Fritid</a>
+        </div>
+        <!-- Mobile menu button -->
+        <div class="md:hidden flex items-center">
+          <button class="outline-none mobile-menu-button">
+            <svg class="w-6 h-6 text-gray-700 hover:text-gray-900"
+              fill="none"
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              viewBox="0 0 24 24"
+              stroke="currentColor">
+              <path d="M4 6h16M4 12h16M4 18h16"></path>
+            </svg>
+          </button>
+        </div>
+      </div>
+    </div>
+    <!-- Mobile menu -->
+    <div class="hidden mobile-menu md:hidden">
+      <ul class="">
+        <li><a href="/" class="block text-sm px-2 py-4 <%= page === 'forside' ? 'bg-primary text-white' : 'hover:bg-primary hover:text-white' %> transition duration-300">Forside</a></li>
+        <li><a href="/jobs" class="block text-sm px-2 py-4 <%= page === 'jobs' ? 'bg-primary text-white' : 'hover:bg-primary hover:text-white' %> transition duration-300">Erfaring</a></li>
+        <li><a href="/fritid" class="block text-sm px-2 py-4 <%= page === 'fritid' ? 'bg-primary text-white' : 'hover:bg-primary hover:text-white' %> transition duration-300">Fritid</a></li>
+      </ul>
+    </div>
+  </nav>
+
+  <!-- Main Content -->
+  <main>
+    <%- body %>
+  </main>
+
+  <!-- Footer -->
+  <footer class="bg-gray-800 text-white mt-20">
+    <div class="max-w-6xl mx-auto px-4 py-8">
+      <div class="flex flex-col md:flex-row justify-between items-center gap-4">
+        <div class="mb-4 md:mb-0 text-center md:text-left">
+          <p class="text-lg font-bold">Sebastian Drumm</p>
+          <p class="text-gray-400">Full Stack Developer</p>
+        </div>
+        <div class="flex flex-col sm:flex-row gap-3 sm:gap-4 text-center">
+          <a href="mailto:sedrumm@gmail.com" class="hover:text-sand transition duration-300 text-sm sm:text-base">📧 sedrumm@gmail.com</a>
+          <a href="tel:+4522263888" class="hover:text-sand transition duration-300 text-sm sm:text-base">📱 22 26 38 88</a>
+        </div>
+      </div>
+      <div class="text-center mt-8 text-gray-400 text-xs sm:text-sm">
+        <p>&copy; <%= new Date().getFullYear() %> Sebastian Drumm. Alle rettigheder forbeholdes.</p>
+      </div>
+    </div>
+  </footer>
+
+  <script>
+    // Mobile menu toggle
+    const btn = document.querySelector('.mobile-menu-button');
+    const menu = document.querySelector('.mobile-menu');
+
+    btn.addEventListener('click', () => {
+      menu.classList.toggle('hidden');
+    });
+  </script>
+</body>
+</html>
