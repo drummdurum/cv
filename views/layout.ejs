@@ -93,6 +93,21 @@
           </button>
         </div>
       </div>
+      <% if (page === 'jobs') { %>
+        <div class="border-t border-gray-200 py-3">
+          <div class="flex flex-wrap justify-center gap-2 sm:gap-3">
+            <a href="#uddannelse" class="rounded-full border border-gray-300 bg-white px-3 py-2 text-xs sm:px-4 sm:text-sm font-semibold text-gray-700 shadow-sm transition hover:border-gray-900 hover:text-gray-900">
+              Uddannelse
+            </a>
+            <a href="#kompetencer" class="rounded-full border border-gray-300 bg-white px-3 py-2 text-xs sm:px-4 sm:text-sm font-semibold text-gray-700 shadow-sm transition hover:border-gray-900 hover:text-gray-900">
+              Nøglekompetencer
+            </a>
+            <a href="#erfaring" class="rounded-full border border-gray-300 bg-white px-3 py-2 text-xs sm:px-4 sm:text-sm font-semibold text-gray-700 shadow-sm transition hover:border-gray-900 hover:text-gray-900">
+              Arbejdserfaring
+            </a>
+          </div>
+        </div>
+      <% } %>
     </div>
     <!-- Mobile menu -->
     <div class="hidden mobile-menu md:hidden bg-sand border-t border-gray-300">

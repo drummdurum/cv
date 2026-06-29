@@ -52,11 +52,12 @@
 <section class="py-16 bg-sand">
   <div class="max-w-6xl mx-auto px-4">
     <h2 class="section-title">Tekniske Kompetencer</h2>
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8">
+    <div class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mt-8">
       <div class="card">
         <h3 class="text-xl font-bold text-gray-800 mb-4">Frontend</h3>
         <ul class="space-y-2 text-gray-600">
           <li>✓ HTML, CSS, JavaScript</li>
+          <li>✓ React & TypeScript</li>
           <li>✓ Tailwind CSS</li>
           <li>✓ EJS Templates</li>
         </ul>
@@ -68,19 +69,28 @@
           <li>✓ Java & Spring Boot</li>
           <li>✓ RESTful APIs</li>
           <li>✓ API design & integration</li>
-          <li>✓ Database design</li>
+          <li>✓ JWT & rollebaseret adgang</li>
         </ul>
       </div>
       <div class="card">
-        <h3 class="text-xl font-bold text-gray-800 mb-4">Værktøjer & Andre</h3>
+        <h3 class="text-xl font-bold text-gray-800 mb-4">Databaser</h3>
+        <ul class="space-y-2 text-gray-600">
+          <li>✓ MySQL & PostgreSQL</li>
+          <li>✓ MongoDB</li>
+          <li>✓ Neo4j grafdatabase</li>
+          <li>✓ Datamodellering</li>
+          <li>✓ Migration & backup/restore</li>
+        </ul>
+      </div>
+      <div class="card">
+        <h3 class="text-xl font-bold text-gray-800 mb-4">Quality & Værktøjer</h3>
         <ul class="space-y-2 text-gray-600">
           <li>✓ Git & GitHub</li>
           <li>✓ Docker</li>
-          <li>✓ Agile metoder</li>
-          <li>✓ Testing & Debugging</li>
+          <li>✓ Playwright & API tests</li>
+          <li>✓ k6 performance tests</li>
+          <li>✓ SonarQube & Jacoco</li>
           <li>✓ AI løsninger & tools</li>
-          <li>✓ CI/CD pipelines</li>
-          <li>✓ Cloud services (Railway, Vercel)</li>
         </ul>
       </div>
     </div>
@@ -124,14 +134,11 @@
 
     <!-- Skole Projekter -->
     <div class="mt-12">
-      <h3 class="text-2xl font-bold text-gray-800 mb-6">🎓 Skole Projekter</h3>
+      <h3 class="text-2xl font-bold text-gray-800 mb-6">🎓 Datamatiker Projekter</h3>
       <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div class="card border-l-4 border-green-600">
           <h4 class="text-xl font-bold text-gray-800 mb-2">Sceneskift.nu</h4>
           <p class="text-gray-600 mb-4">Eksamensprojekt - Samarbejde med en iværksætter om en platform for amatørteater.</p>
-          <a href="https://www.sceneskift.nu" class="text-blue-600 hover:text-blue-800 font-semibold inline-flex items-center mb-4">
-            Besøg Sceneskift.nu →
-          </a>
           <div class="flex flex-wrap gap-2 mb-4">
             <span class="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm">Railway</span>
             <span class="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm">Socket.io</span>
@@ -148,9 +155,7 @@
         <div class="card border-l-4 border-green-600">
           <h4 class="text-xl font-bold text-gray-800 mb-2">BarTooBar - Bar Crawl Platform</h4>
           <p class="text-gray-600 mb-4">Eksamensprojekt - Platform til at finde den perfekte bar og planlægge bar crawl ruter med ruteplanlægning, ratings og temaer.</p>
-          <a href="https://eksamen2025-production.up.railway.app/" target="_blank" class="text-blue-600 hover:text-blue-800 font-semibold inline-flex items-center mb-4">
-            Besøg BarTooBar.com →
-          </a>
+      
           <div class="flex flex-wrap gap-2 mb-4">
             <span class="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm">Node.js</span>
             <span class="bg-green-100 text-green-800 px-3 py-1 rounded-full text-sm">Express</span>
@@ -164,6 +169,57 @@
             📂 GitHub Repository →
           </a>
           <p class="text-sm text-gray-500 mt-2">KEA - Eksamensprojekt 2025 3. semester</p>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- Professionsbachelor Projekter -->
+    <div class="mt-12">
+      <h3 class="text-2xl font-bold text-gray-800 mb-6">💻 Professionsbachelor i Softwareudvikling</h3>
+      <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+        <div class="card border-l-4 border-indigo-600">
+          <h4 class="text-xl font-bold text-gray-800 mb-2">Shift Happens - Database & Migration</h4>
+          <p class="text-gray-600 mb-4">Top-up projekt på EK om et vagtplanlægnings- og fraværssystem med fokus på datamodellering på tværs af relationelle, dokumentbaserede og grafbaserede databaser.</p>
+          <p class="text-sm text-gray-600 mb-4">Data blev modelleret i MySQL og migreret til MongoDB og Neo4j. Projektet indeholdt schema scripts, dumps, indexes, triggers, views, backup/restore flow og en migreringsservice fra MySQL til de to andre databaser.</p>
+
+          <div class="flex flex-wrap gap-2 mb-4">
+            <span class="bg-indigo-100 text-indigo-800 px-3 py-1 rounded-full text-sm">Java 21</span>
+            <span class="bg-indigo-100 text-indigo-800 px-3 py-1 rounded-full text-sm">Spring Boot</span>
+            <span class="bg-indigo-100 text-indigo-800 px-3 py-1 rounded-full text-sm">MySQL</span>
+            <span class="bg-indigo-100 text-indigo-800 px-3 py-1 rounded-full text-sm">MongoDB</span>
+            <span class="bg-indigo-100 text-indigo-800 px-3 py-1 rounded-full text-sm">Neo4j</span>
+            <span class="bg-indigo-100 text-indigo-800 px-3 py-1 rounded-full text-sm">Grafdatabase</span>
+            <span class="bg-indigo-100 text-indigo-800 px-3 py-1 rounded-full text-sm">Data Migration</span>
+            <span class="bg-indigo-100 text-indigo-800 px-3 py-1 rounded-full text-sm">Docker</span>
+          </div>
+          <a href="https://github.com/Luke3520/shift_happens" target="_blank" class="text-gray-600 hover:text-gray-800 text-sm inline-flex items-center">
+            📂 Database repository →
+          </a>
+          <p class="text-sm text-gray-500 mt-2">EK - Top-up databaseprojekt</p>
+        </div>
+
+        <div class="card border-l-4 border-indigo-600">
+          <h4 class="text-xl font-bold text-gray-800 mb-2">Shift Happens - Software Quality</h4>
+          <p class="text-gray-600 mb-4">Videreudvikling af Shift Happens med fokus på teststrategi, kodekvalitet, sikkerhed og performance i et Java/Spring Boot system med React frontend.</p>
+          <p class="text-sm text-gray-600 mb-4">Projektet arbejdede med black-box og white-box test, API- og end-to-end test, performance-scenarier samt quality tooling med coverage og statisk analyse.</p>
+
+          <div class="flex flex-wrap gap-2 mb-4">
+            <span class="bg-indigo-100 text-indigo-800 px-3 py-1 rounded-full text-sm">Java 21</span>
+            <span class="bg-indigo-100 text-indigo-800 px-3 py-1 rounded-full text-sm">Spring Boot</span>
+            <span class="bg-indigo-100 text-indigo-800 px-3 py-1 rounded-full text-sm">React</span>
+            <span class="bg-indigo-100 text-indigo-800 px-3 py-1 rounded-full text-sm">TypeScript</span>
+            <span class="bg-indigo-100 text-indigo-800 px-3 py-1 rounded-full text-sm">JWT</span>
+            <span class="bg-indigo-100 text-indigo-800 px-3 py-1 rounded-full text-sm">Software Quality</span>
+            <span class="bg-indigo-100 text-indigo-800 px-3 py-1 rounded-full text-sm">Playwright</span>
+            <span class="bg-indigo-100 text-indigo-800 px-3 py-1 rounded-full text-sm">k6</span>
+            <span class="bg-indigo-100 text-indigo-800 px-3 py-1 rounded-full text-sm">SonarQube</span>
+            <span class="bg-indigo-100 text-indigo-800 px-3 py-1 rounded-full text-sm">Jacoco</span>
+          </div>
+          <a href="https://github.com/jarrald/shift_quality_happens" target="_blank" class="text-gray-600 hover:text-gray-800 text-sm inline-flex items-center">
+            📂 Software quality repository →
+          </a>
+          <p class="text-sm text-gray-500 mt-2">EK - Top-up software quality projekt</p>
         </div>
       </div>
     </div>
