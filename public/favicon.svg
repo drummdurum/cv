@@ -1,10 +1,25 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512">
-  <!-- Background circle with sand color -->
-  <circle cx="256" cy="256" r="256" fill="#e8dcc4"/>
-  
-  <!-- Inner circle for contrast -->
-  <circle cx="256" cy="256" r="200" fill="#111827"/>
-  
-  <!-- SD text -->
-  <text x="256" y="310" font-family="Arial, sans-serif" font-size="180" font-weight="bold" fill="#e8dcc4" text-anchor="middle">SD</text>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 512 512" role="img" aria-label="Tre tandhjul med bogstavet S">
+  <defs>
+    <path id="gear" d="M222 34h68l10 55a176 176 0 0 1 31 13l46-32 48 48-32 46a176 176 0 0 1 13 31l55 10v68l-55 10a176 176 0 0 1-13 31l32 46-48 48-46-32a176 176 0 0 1-31 13l-10 55h-68l-10-55a176 176 0 0 1-31-13l-46 32-48-48 32-46a176 176 0 0 1-13-31l-55-10v-68l55-10a176 176 0 0 1 13-31l-32-46 48-48 46 32a176 176 0 0 1 31-13z"/>
+  </defs>
+
+  <rect width="512" height="512" rx="88" fill="#111827"/>
+
+  <!-- Three interlocking gears -->
+  <g fill="#e8dcc4">
+    <g transform="translate(184 287) scale(.62) translate(-256 -256)">
+      <use href="#gear"/>
+      <circle cx="256" cy="256" r="132" fill="#111827"/>
+    </g>
+    <g transform="translate(356 137) scale(.34) translate(-256 -256)">
+      <use href="#gear"/>
+      <circle cx="256" cy="256" r="118" fill="#111827"/>
+    </g>
+    <g transform="translate(377 337) scale(.38) translate(-256 -256)">
+      <use href="#gear"/>
+      <circle cx="256" cy="256" r="118" fill="#111827"/>
+    </g>
+  </g>
+
+  <text x="184" y="331" font-family="Arial, sans-serif" font-size="132" font-weight="700" fill="#e8dcc4" text-anchor="middle">S</text>
 </svg>
