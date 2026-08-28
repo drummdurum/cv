@@ -1,5 +1,5 @@
 <!DOCTYPE html>
-<html lang="da">
+<html lang="<%= language %>">
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
@@ -15,6 +15,9 @@
   <meta name="author" content="Sebastian Drumm">
   <meta name="robots" content="index, follow">
   <link rel="canonical" href="https://www.sebastiandrumm.dk<%= typeof canonicalPath !== 'undefined' ? canonicalPath : '/' %>">
+  <link rel="alternate" hreflang="da" href="https://www.sebastiandrumm.dk<%= typeof canonicalPath !== 'undefined' ? canonicalPath : '/' %>?lang=da">
+  <link rel="alternate" hreflang="en" href="https://www.sebastiandrumm.dk<%= typeof canonicalPath !== 'undefined' ? canonicalPath : '/' %>?lang=en">
+  <link rel="alternate" hreflang="x-default" href="https://www.sebastiandrumm.dk<%= typeof canonicalPath !== 'undefined' ? canonicalPath : '/' %>">
   
   <!-- Open Graph / Facebook -->
   <meta property="og:type" content="website">
@@ -65,19 +68,22 @@
   <!-- Navigation -->
   <nav class="bg-sand shadow-lg sticky top-0 z-50">
     <div class="max-w-6xl mx-auto px-4">
-      <div class="flex justify-between items-center py-4">
-        <div class="flex space-x-7">
+      <div class="flex items-center justify-between py-4 md:grid md:grid-cols-[1fr_auto_1fr]">
+        <div class="flex space-x-7 md:justify-self-start">
           <div>
             <a href="/" class="flex items-center py-4 px-2">
               <span class="font-bold text-2xl text-gray-900">Sebastian Drumm</span>
             </a>
           </div>
         </div>
-        <div class="hidden md:flex items-center space-x-1">
+        <div class="hidden md:flex items-center justify-center space-x-1">
           <a href="/" class="py-4 px-4 border-b-4 <%= page === 'forside' ? 'text-gray-900 border-gray-900' : 'text-gray-700 border-transparent nav-link' %> font-semibold transition duration-300 relative">Forside</a>
           <a href="/jobs" class="py-4 px-4 border-b-4 <%= page === 'jobs' ? 'text-gray-900 border-gray-900' : 'text-gray-700 border-transparent nav-link' %> font-semibold transition duration-300 relative">Erfaring</a>
           <a href="/fritid" class="py-4 px-4 border-b-4 <%= page === 'fritid' ? 'text-gray-900 border-gray-900' : 'text-gray-700 border-transparent nav-link' %> font-semibold transition duration-300 relative">Fritid</a>
-          <a href="/filer/cv/Sebastian_Drumm_CV.pdf" target="_blank" rel="noopener noreferrer" class="ml-3 rounded-lg bg-[#A45C40] px-4 py-3 font-semibold text-white shadow-sm transition duration-300 hover:bg-[#8f4f37] hover:shadow-md">Download CV</a>
+        </div>
+        <div class="hidden md:flex items-center justify-self-end gap-2">
+          <a href="/filer/cv/Sebastian_Drumm_CV.pdf" target="_blank" rel="noopener noreferrer" class="rounded-lg bg-[#A45C40] px-4 py-3 font-semibold text-white shadow-sm transition duration-300 hover:bg-[#8f4f37] hover:shadow-md">Download CV</a>
+          <a href="<%= languageSwitchUrl %>" class="rounded-lg border border-gray-700 px-3 py-3 font-bold text-gray-800 transition duration-300 hover:bg-gray-800 hover:text-white" aria-label="<%= language === 'da' ? 'Switch to English' : 'Skift til dansk' %>"><%= language === 'da' ? 'ENG' : 'DA' %></a>
         </div>
         <!-- Mobile menu button -->
         <div class="md:hidden flex items-center">
@@ -117,6 +123,7 @@
         <li><a href="/jobs" class="block text-base px-6 py-3 <%= page === 'jobs' ? 'text-gray-900 font-bold border-l-4 border-gray-900 bg-gray-100' : 'text-gray-700' %> transition duration-300 relative mobile-nav-link">Erfaring</a></li>
         <li><a href="/fritid" class="block text-base px-6 py-3 <%= page === 'fritid' ? 'text-gray-900 font-bold border-l-4 border-gray-900 bg-gray-100' : 'text-gray-700' %> transition duration-300 relative mobile-nav-link">Fritid</a></li>
         <li><a href="/filer/cv/Sebastian_Drumm_CV.pdf" target="_blank" rel="noopener noreferrer" class="mx-4 my-2 block rounded-lg bg-[#A45C40] px-4 py-3 text-center font-semibold text-white transition duration-300 hover:bg-[#8f4f37]">Download CV</a></li>
+        <li><a href="<%= languageSwitchUrl %>" class="mx-4 my-2 block rounded-lg border border-gray-700 px-4 py-3 text-center font-bold text-gray-800 transition duration-300 hover:bg-gray-800 hover:text-white"><%= language === 'da' ? 'ENG' : 'DA' %></a></li>
       </ul>
     </div>
   </nav>
