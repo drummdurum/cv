@@ -137,6 +137,7 @@ const translations = {
   'grafdatabase': 'graph database',
   'Datamodellering': 'Data modelling',
   'AI løsninger & tools': 'AI solutions & tools',
+  'UiPath-automatisering': 'UiPath automation',
   'Uddannelse': 'Education',
   'Problemløsning': 'Problem-solving',
   'Lærevillig': 'Eager to learn',
