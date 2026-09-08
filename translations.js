@@ -1,4 +1,9 @@
 const translations = {
+  'Send mig en besked': 'Send me a message',
+  'Udfyld formularen, så vender jeg tilbage hurtigst muligt.': 'Complete the form and I will get back to you as soon as possible.',
+  'Navn': 'Name',
+  'Besked': 'Message',
+  'Send besked': 'Send message',
   'da_DK': 'en_US',
   'Sebastian Drumm - Erhvervserfaring & Uddannelse': 'Sebastian Drumm - Work Experience & Education',
   'Sebastian Drumm - Fritid & Interesser': 'Sebastian Drumm - Hobbies & Interests',

@@ -1,30 +1,47 @@
+require('dotenv').config();
 const express = require('express');
 const path = require('path');
 const ejs = require('ejs');
 const { translateHtml } = require('./translations');
+const { sendContactEmails } = require('./services/mailService');
 
 const app = express();
 const PORT = process.env.PORT || 3010;
+const CONTACT_WINDOW_MS = 15 * 60 * 1000;
+const CONTACT_MAX_REQUESTS = 5;
+const contactRequests = new Map();
 
 // Set EJS as template engine
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
+app.set('trust proxy', 1);
 
 // Static files
 app.use(express.static(path.join(__dirname, 'public')));
+app.use(express.json({ limit: '20kb' }));
+app.use(express.urlencoded({ extended: false, limit: '20kb' }));
 
 // Helper function to render with layout
 const renderWithLayout = async (viewName, options, req, res) => {
   const language = req.language;
   const body = await ejs.renderFile(
     path.join(__dirname, 'views', `${viewName}.ejs`),
-    options
+    {
+      ...options,
+      language,
+      cvDownloadUrl: language === 'en'
+        ? '/filer/cv/Sebastian_Drumm_CV_EN.pdf'
+        : '/filer/cv/Sebastian_Drumm_CV.pdf'
+    }
   );
 
   const html = await ejs.renderFile(path.join(__dirname, 'views', 'layout.ejs'), {
     ...options,
     body,
     language,
+    cvDownloadUrl: language === 'en'
+      ? '/filer/cv/Sebastian_Drumm_CV_EN.pdf'
+      : '/filer/cv/Sebastian_Drumm_CV.pdf',
     languageSwitchUrl: `/language/${language === 'da' ? 'en' : 'da'}?returnTo=${encodeURIComponent(req.path)}`
   });
 
@@ -91,6 +108,40 @@ app.get('/fritid', async (req, res) => {
     title: 'Sebastian Drumm - Fritid & Interesser',
     canonicalPath: '/fritid'
   }, req, res);
+});
+
+const contactRateLimit = (req, res, next) => {
+  const now = Date.now();
+  const recentRequests = (contactRequests.get(req.ip) || [])
+    .filter(timestamp => now - timestamp < CONTACT_WINDOW_MS);
+  if (recentRequests.length >= CONTACT_MAX_REQUESTS) {
+    return res.status(429).json({ error: 'For mange forsøg. Vent venligst lidt og prøv igen.' });
+  }
+  recentRequests.push(now);
+  contactRequests.set(req.ip, recentRequests);
+  next();
+};
+
+const isValidEmail = (email) => /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+
+app.post('/api/contact', contactRateLimit, async (req, res) => {
+  const name = typeof req.body.name === 'string' ? req.body.name.trim() : '';
+  const email = typeof req.body.email === 'string' ? req.body.email.trim().toLowerCase() : '';
+  const message = typeof req.body.message === 'string' ? req.body.message.trim() : '';
+  const language = req.body.language === 'en' ? 'en' : 'da';
+
+  if (name.length < 2 || name.length > 100 || !isValidEmail(email) || email.length > 254 || message.length < 10 || message.length > 5000) {
+    return res.status(400).json({ error: 'Kontrollér venligst navn, e-mail og besked.' });
+  }
+
+  try {
+    const mailJob = await sendContactEmails({ name, email, message, language });
+    console.log('Contact email queued:', mailJob.jobId || 'job id not returned', mailJob.status || 'accepted');
+    return res.json({ success: true, status: mailJob.status || 'QUEUED' });
+  } catch (error) {
+    console.error('Contact form email failed:', error.message);
+    return res.status(502).json({ error: 'Beskeden kunne ikke sendes lige nu. Prøv venligst igen senere.' });
+  }
 });
 
 app.listen(PORT, () => {

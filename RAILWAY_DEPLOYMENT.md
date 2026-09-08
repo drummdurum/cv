@@ -79,6 +79,18 @@ Projektet er allerede konfigureret til Railway med:
 
 ### 🔄 Continuous Deployment
 
+### Kontaktformular og mail
+
+Kontaktformularen sender mails via den centrale mailservice. Tilføj kun disse environment variables i Railway:
+
+```text
+MAIL_SERVICE_URL=https://din-mail-api.up.railway.app
+MAIL_SERVICE_API_KEY=DIN_CV_API_NØGLE
+```
+
+Brug den offentlige Railway-URL uden afsluttende `/` og kun API-nøglen for CV-appen.
+API-nøglen må aldrig placeres i frontendkode.
+
 Hvis du bruger GitHub metoden:
 - Hver gang du pusher til `main` branch, deployer Railway automatisk
 - Railway viser build logs og deployment status

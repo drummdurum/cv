@@ -82,7 +82,8 @@
           <a href="/fritid" class="py-4 px-4 border-b-4 <%= page === 'fritid' ? 'text-gray-900 border-gray-900' : 'text-gray-700 border-transparent nav-link' %> font-semibold transition duration-300 relative">Fritid</a>
         </div>
         <div class="hidden md:flex items-center justify-self-end gap-2">
-          <a href="/filer/cv/Sebastian_Drumm_CV.pdf" target="_blank" rel="noopener noreferrer" class="rounded-lg bg-[#A45C40] px-4 py-3 font-semibold text-white shadow-sm transition duration-300 hover:bg-[#8f4f37] hover:shadow-md">Download CV</a>
+          <a href="<%= cvDownloadUrl %>" download target="_blank" rel="noopener noreferrer" class="rounded-lg bg-[#A45C40] px-4 py-3 font-semibold text-white shadow-sm transition duration-300 hover:bg-[#8f4f37] hover:shadow-md">Download CV</a>
+          <% if (page === 'forside') { %><button type="button" data-contact-open class="rounded-lg border border-[#A45C40] px-4 py-3 font-semibold text-[#A45C40] transition duration-300 hover:bg-[#A45C40] hover:text-white">Send besked</button><% } %>
           <a href="<%= languageSwitchUrl %>" class="rounded-lg border border-gray-700 px-3 py-3 font-bold text-gray-800 transition duration-300 hover:bg-gray-800 hover:text-white" aria-label="<%= language === 'da' ? 'Switch to English' : 'Skift til dansk' %>"><%= language === 'da' ? 'ENG' : 'DA' %></a>
         </div>
         <!-- Mobile menu button -->
@@ -122,7 +123,8 @@
         <li><a href="/" class="block text-base px-6 py-3 <%= page === 'forside' ? 'text-gray-900 font-bold border-l-4 border-gray-900 bg-gray-100' : 'text-gray-700' %> transition duration-300 relative mobile-nav-link">Forside</a></li>
         <li><a href="/jobs" class="block text-base px-6 py-3 <%= page === 'jobs' ? 'text-gray-900 font-bold border-l-4 border-gray-900 bg-gray-100' : 'text-gray-700' %> transition duration-300 relative mobile-nav-link">Erfaring</a></li>
         <li><a href="/fritid" class="block text-base px-6 py-3 <%= page === 'fritid' ? 'text-gray-900 font-bold border-l-4 border-gray-900 bg-gray-100' : 'text-gray-700' %> transition duration-300 relative mobile-nav-link">Fritid</a></li>
-        <li><a href="/filer/cv/Sebastian_Drumm_CV.pdf" target="_blank" rel="noopener noreferrer" class="mx-4 my-2 block rounded-lg bg-[#A45C40] px-4 py-3 text-center font-semibold text-white transition duration-300 hover:bg-[#8f4f37]">Download CV</a></li>
+        <li><a href="<%= cvDownloadUrl %>" download target="_blank" rel="noopener noreferrer" class="mx-4 my-2 block rounded-lg bg-[#A45C40] px-4 py-3 text-center font-semibold text-white transition duration-300 hover:bg-[#8f4f37]">Download CV</a></li>
+        <% if (page === 'forside') { %><li><button type="button" data-contact-open class="mx-4 my-2 block w-[calc(100%-2rem)] rounded-lg border border-[#A45C40] px-4 py-3 text-center font-semibold text-[#A45C40] transition duration-300 hover:bg-[#A45C40] hover:text-white">Send besked</button></li><% } %>
         <li><a href="<%= languageSwitchUrl %>" class="mx-4 my-2 block rounded-lg border border-gray-700 px-4 py-3 text-center font-bold text-gray-800 transition duration-300 hover:bg-gray-800 hover:text-white"><%= language === 'da' ? 'ENG' : 'DA' %></a></li>
       </ul>
     </div>
