@@ -25,6 +25,28 @@
 
 .gloegg-event .detail-body { color: var(--ink); }
 
+.gloegg-event :is(.participate-button, .button, .join-button, .name-form-row button) {
+  min-height: 44px;
+  border-radius: 999px;
+  padding-inline: 22px;
+}
+
+.gloegg-event .participate-button {
+  background: #ffc490;
+  color: #502330;
+}
+.gloegg-event .participate-button:hover { background: #ffdbb6; }
+
+.gloegg-event .vote-option {
+  min-height: 44px;
+  border-radius: 16px;
+}
+
+.gloegg-event button:focus-visible {
+  outline: 2px solid currentColor;
+  outline-offset: 3px;
+}
+
 .gloegg-event .detail-hero {
   --brulee: #ffc490;
   display: grid;
