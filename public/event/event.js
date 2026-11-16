@@ -23,6 +23,7 @@ document.querySelector('[data-open-vote]').addEventListener('click', () => showT
 
 const nameForm = document.getElementById('name-form');
 const echoForm = document.getElementById('echo-form');
+const echoDetails = document.getElementById('echo-details');
 const chatForm = document.getElementById('chat-form');
 const chatSection = document.getElementById('chat-section');
 const chatLauncher = document.createElement('button');
@@ -110,7 +111,7 @@ function showParticipant(participant) {
   document.getElementById('participate-button').textContent = 'Du deltager ✓';
   document.getElementById('chat-section').hidden = false;
   chatLauncher.hidden = false;
-  document.getElementById('echo-details').hidden = false;
+  if (echoDetails) echoDetails.hidden = false;
   document.getElementById('name-result').textContent = '';
   loadAttendees();
   connect();
@@ -224,7 +225,7 @@ options.forEach(option => option.addEventListener('click', () => {
   document.getElementById('vote-feedback').textContent = 'Din stemme er registreret. Du kan ændre den.';
 }));
 
-echoForm.addEventListener('submit', async event => {
+echoForm?.addEventListener('submit', async event => {
   event.preventDefault();
   const result = document.getElementById('echo-result');
   result.classList.remove('error');
