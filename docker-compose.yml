@@ -1,0 +1,38 @@
+services:
+  app:
+    build: .
+    restart: unless-stopped
+    environment:
+      NODE_ENV: production
+      PORT: 3010
+      GRPC_PORT: 50051
+      MONGODB_URI: mongodb://event_admin:${MONGO_ROOT_PASSWORD:?MONGO_ROOT_PASSWORD mangler i .env}@mongo:27017/sebastian_event?authSource=admin
+      MONGODB_DB: sebastian_event
+      EVENT_COOKIE_SECRET: ${EVENT_COOKIE_SECRET:?EVENT_COOKIE_SECRET mangler i .env}
+      EVENT_ALLOWED_ORIGINS: ${EVENT_ALLOWED_ORIGINS:-}
+      MAIL_SERVICE_URL: ${MAIL_SERVICE_URL:-}
+      MAIL_SERVICE_API_KEY: ${MAIL_SERVICE_API_KEY:-}
+    ports:
+      - "127.0.0.1:3010:3010"
+      - "127.0.0.1:50051:50051"
+    depends_on:
+      mongo:
+        condition: service_healthy
+
+  mongo:
+    image: mongo:7
+    restart: unless-stopped
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: event_admin
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_ROOT_PASSWORD:?MONGO_ROOT_PASSWORD mangler i .env}
+    volumes:
+      - mongo_data:/data/db
+    healthcheck:
+      test: ["CMD-SHELL", "mongosh --username \"$$MONGO_INITDB_ROOT_USERNAME\" --password \"$$MONGO_INITDB_ROOT_PASSWORD\" --authenticationDatabase admin --quiet --eval 'db.adminCommand({ ping: 1 }).ok' | grep 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 12
+      start_period: 20s
+
+volumes:
+  mongo_data:

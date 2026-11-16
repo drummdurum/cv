@@ -1,0 +1,43 @@
+<!doctype html>
+<html lang="da">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Eventer</title>
+  <link rel="stylesheet" href="/event/event.css">
+</head>
+<body>
+  <header class="site-header"><div class="shell header-inner"><a class="brand" href="/event">samlet<span>.</span></a><span class="header-note">Plads til gode oplevelser</span></div></header>
+  <main>
+    <section class="hero shell">
+      <div class="eyebrow"><span class="eyebrow-line"></span> DET SKER SNART</div>
+      <h1>Det er bedre<br><em>sammen.</em></h1>
+      <p>Find et event, vær med til at forme det, og mød op til noget godt. Her finder du de kommende arrangementer.</p>
+      <a class="hero-link" href="#events">Se eventer <span aria-hidden="true">↗</span></a>
+      <div class="hero-index">01 / EVENTER</div>
+    </section>
+    <section class="events-section" id="events"><div class="shell">
+      <div class="section-heading"><div><div class="eyebrow light">KOMMENDE ARRANGEMENTER</div><h2>Find din næste<br><em>oplevelse.</em></h2></div><span><%= events.length %> eventer</span></div>
+      <div class="event-grid">
+        <% events.forEach((event, index) => { %>
+        <a class="event-card" href="/event/<%= event.id %>">
+          <div class="card-top"><span><%= String(index + 1).padStart(2, '0') %> / <%= event.category %></span><span class="card-arrow">↗</span></div>
+          <div class="card-content"><div class="card-date"><%= event.date %> · <%= event.time %></div><h3><%= event.title %></h3><p><%= event.description %></p></div>
+          <div class="card-bottom"><span><%= event.place %></span><strong>Udforsk eventet <span aria-hidden="true">→</span></strong></div>
+        </a>
+        <% }) %>
+      </div>
+    </div></section>
+    <section class="quiz-section" id="quiz"><div class="shell">
+      <div class="eyebrow"><span class="eyebrow-line"></span> TEST DIN VIDEN</div>
+      <div class="quiz-section-heading"><h2>Tre emner.<br><em>Ét spørgsmål ad gangen.</em></h2><p>Vælg en quiz, svar på 20 spørgsmål og se din score efter hvert svar.</p></div>
+      <div class="quiz-overview-grid">
+        <% quizzes.forEach((quiz) => { %>
+        <a class="quiz-overview-card" href="/event/quiz/<%= quiz.id %>"><span class="quiz-overview-number"><%= quiz.count %> SPØRGSMÅL</span><h3><%= quiz.title %></h3><p><%= quiz.description %></p><span class="quiz-overview-link">Åbn quiz <span aria-hidden="true">↗</span></span></a>
+        <% }) %>
+      </div>
+    </div></section>
+  </main>
+  <footer class="site-footer"><div class="shell footer-inner"><span>samlet<span class="accent">.</span></span><span>Gode oplevelser begynder her.</span></div></footer>
+</body>
+</html>

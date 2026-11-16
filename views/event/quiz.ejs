@@ -1,0 +1,30 @@
+<!doctype html>
+<html lang="da">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title><%= quiz.title %> · Quiz</title>
+  <link rel="stylesheet" href="/event/event.css">
+</head>
+<body data-event-id="quiz-hub">
+  <header class="site-header"><div class="shell header-inner"><a class="brand" href="/event">samlet<span>.</span></a><a class="header-back" href="/event#quiz">← Alle quizzer</a></div></header>
+  <main>
+    <section class="quiz-page-hero shell"><div class="eyebrow"><span class="eyebrow-line"></span> QUIZ / <%= quiz.count %> SPØRGSMÅL</div><h1><%= quiz.title %><span>.</span></h1><p><%= quiz.description %></p></section>
+    <section class="detail-body"><div class="shell quiz-page-layout">
+      <div class="quiz-page-main"><div class="content-label">TEST DIN VIDEN</div><h2>Er du klar?</h2><p>Du får ét spørgsmål ad gangen. Efter hvert svar ser du, om det var rigtigt, og hvordan din score udvikler sig.</p>
+        <div id="quiz-library" class="quiz-page-start"><button class="button quiz-start" type="button" data-quiz-id="<%= quiz.id %>" disabled>Start <%= quiz.title %> ↗</button></div>
+        <p id="quiz-notice" class="quiz-notice">Skriv navn og mail for at spille. Har du deltaget før, genkender vi dig på denne enhed.</p>
+        <div id="quiz-play" class="quiz-play" hidden><div class="quiz-topline"><span id="quiz-topic"></span><strong id="quiz-score">0 / 20 point</strong></div><div class="quiz-progress"><span id="quiz-progress-bar"></span></div><p id="quiz-progress-label"></p><h3 id="quiz-question"></h3><div id="quiz-answers" class="quiz-answers"></div><p id="quiz-feedback" role="status" aria-live="polite"></p><button id="quiz-next" class="button" type="button" hidden>Næste spørgsmål →</button><button id="quiz-back" class="quiz-back" type="button">← Start forfra</button></div>
+      </div>
+      <aside class="quiz-page-side"><div class="echo-box"><div class="content-label">DIN PLADS I QUIZZEN</div><h3 id="quiz-register-title">Vær med</h3><p id="quiz-register-intro">Opret dig med navn og mail én gang. Din score bliver knyttet til dig.</p>
+        <form id="quiz-name-form"><label for="quiz-name">Dit navn</label><div class="name-form-row"><input id="quiz-name" minlength="2" maxlength="40" required autocomplete="name" placeholder="Dit navn"><label for="quiz-email">Din mail</label><input id="quiz-email" type="email" maxlength="254" required autocomplete="email" placeholder="dig@eksempel.dk"><button type="submit">Deltag i quizzerne ↗</button></div></form>
+        <div id="quiz-known" hidden><p>Du er oprettet som <strong id="quiz-known-name"></strong>.</p><button id="quiz-join" class="join-button" type="button">Deltag i quizzerne ↗</button></div>
+        <p id="quiz-registered" hidden>Du spiller som <strong id="quiz-player-name"></strong>.</p><p id="quiz-register-status" class="echo-result" role="status" aria-live="polite"></p>
+      </div></aside>
+    </div></section>
+  </main>
+  <footer class="site-footer"><div class="shell footer-inner"><span>samlet<span class="accent">.</span></span><a href="/event#quiz">Tilbage til quizzerne ↗</a></div></footer>
+  <script src="/event/quiz-page.js" defer></script>
+  <script src="/event/quiz-player.js" defer></script>
+</body>
+</html>

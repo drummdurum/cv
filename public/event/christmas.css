@@ -1,0 +1,24 @@
+.christmas-event{--ink:#173d33;--eclipse:#285447;--brulee:#b88b4c;--latte:#e9d9b8;--paper:#f5efe2;--white:#fffaf0}
+.christmas-video-window{grid-column:2;grid-row:1 / 5;align-self:center;position:relative;z-index:1;background:#173d33;border:8px solid #fffaf0;box-shadow:0 25px 60px #173d3340;animation:christmas-video-drift 18s ease-in-out infinite alternate}
+.christmas-video-window iframe{display:block;width:100%;aspect-ratio:16/9;border:0}
+.christmas-video-window a{display:block;padding:10px 12px;color:#fffaf0;font-size:12px;text-align:right;text-decoration:underline;text-underline-offset:3px}
+.christmas-event .site-header{background:#173d33;color:#fffaf0;border-color:#ffffff30}
+.christmas-event .detail-hero{isolation:isolate;min-height:650px;overflow:hidden;padding-top:110px;padding-bottom:100px;display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1fr);column-gap:55px;align-content:center}
+.christmas-event .detail-hero>.christmas-kicker,.christmas-event .detail-hero>.eyebrow,.christmas-event .detail-hero>h1,.christmas-event .detail-hero>p{grid-column:1}
+.christmas-event .detail-hero::before{content:"";position:absolute;inset:0;z-index:-2;background:radial-gradient(circle at 78% 43%,#e4c78680 0,#e4c78600 31%),linear-gradient(135deg,#f5efe2,#e9e2cf)}
+.christmas-event .detail-hero h1{position:relative;max-width:710px;font-size:clamp(58px,6.3vw,88px);color:#173d33;text-shadow:0 5px 28px #fffaf080;animation:christmas-appear .9s ease both}
+.christmas-event .detail-hero>p{position:relative;max-width:570px;animation:christmas-appear .9s .15s ease both}
+.christmas-event .detail-facts{position:relative;grid-column:1 / -1;animation:christmas-appear .9s .3s ease both}
+.christmas-kicker{color:#956b32;font-size:12px;font-weight:700;letter-spacing:.25em;margin-bottom:30px;animation:christmas-appear .9s ease both}
+.christmas-orb{position:absolute;z-index:-1;right:7%;top:3%;width:190px;height:190px;border:2px solid #b88b4c80;border-radius:50%;display:grid;place-items:center;font:110px Georgia,serif;color:#b88b4c80;box-shadow:0 0 0 18px #b88b4c12,0 0 0 40px #b88b4c0a;animation:christmas-float 6s ease-in-out infinite}
+.christmas-snow{position:absolute;inset:0;overflow:hidden;pointer-events:none;z-index:-1}
+.christmas-snow span{position:absolute;top:-30px;color:#b88b4c;opacity:.55;font-size:20px;animation:christmas-fall 12s linear infinite}
+.christmas-snow span:nth-child(1){left:4%;animation-delay:-2s}.christmas-snow span:nth-child(2){left:13%;animation-delay:-8s;font-size:14px}.christmas-snow span:nth-child(3){left:22%;animation-delay:-5s}.christmas-snow span:nth-child(4){left:34%;animation-delay:-10s;font-size:13px}.christmas-snow span:nth-child(5){left:44%;animation-delay:-1s}.christmas-snow span:nth-child(6){left:53%;animation-delay:-7s;font-size:16px}.christmas-snow span:nth-child(7){left:62%;animation-delay:-4s}.christmas-snow span:nth-child(8){left:70%;animation-delay:-11s;font-size:14px}.christmas-snow span:nth-child(9){left:79%;animation-delay:-6s}.christmas-snow span:nth-child(10){left:87%;animation-delay:-3s}.christmas-snow span:nth-child(11){left:94%;animation-delay:-9s;font-size:15px}.christmas-snow span:nth-child(12){left:98%;animation-delay:-12s}
+.christmas-event .detail-body{background:#fffaf0}.christmas-event .site-footer{background:#102b24}
+@keyframes christmas-fall{to{transform:translate3d(35px,750px,0) rotate(180deg)}}
+@keyframes christmas-float{50%{transform:translateY(-18px) rotate(7deg)}}
+@keyframes christmas-video-drift{0%{transform:translate(-12px,10px) rotate(-2deg)}50%{transform:translate(10px,-12px) rotate(1deg)}100%{transform:translate(20px,8px) rotate(2deg)}}
+@keyframes christmas-appear{from{opacity:0;transform:translateY(22px)}to{opacity:1;transform:translateY(0)}}
+@media(max-width:850px){.christmas-event .detail-hero{display:block;min-height:0;padding-top:85px;padding-bottom:70px}.christmas-event .detail-hero h1{font-size:clamp(60px,12vw,90px)}.christmas-video-window{max-width:650px;margin:35px 0 0;animation:none}.christmas-event .detail-facts{margin-top:50px}.christmas-orb{right:4%;top:3%;width:140px;height:140px;font-size:80px;opacity:.6}}
+@media(max-width:700px){.christmas-event .detail-hero{padding-top:70px}.christmas-kicker{font-size:10px;letter-spacing:.15em}.christmas-video-window{border-width:5px}}
+@media(prefers-reduced-motion:reduce){.christmas-event .detail-hero h1,.christmas-event .detail-hero>p,.christmas-event .detail-facts,.christmas-kicker,.christmas-orb,.christmas-snow span,.christmas-video-window{animation:none}}

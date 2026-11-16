@@ -1,0 +1,10 @@
+node_modules
+.git
+.env
+.env.local
+tmp
+test-results
+playwright-report
+*.log
+/Sebastian_Drumm_CV.pdf
+/Sebastian_Drumm_CV_English.pdf

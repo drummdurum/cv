@@ -81,6 +81,8 @@ Projektet er allerede konfigureret til Railway med:
 
 ### Kontaktformular og mail
 
+Mailenes visuelle og sproglige retning er beskrevet i [MAIL_STYLE_GUIDE.md](MAIL_STYLE_GUIDE.md). Brug guiden i mailservicens templates, så kvitteringen og mailen til Sebastian matcher CV-siden.
+
 Kontaktformularen sender mails via den centrale mailservice. Tilføj kun disse environment variables i Railway:
 
 ```text
@@ -90,6 +92,10 @@ MAIL_SERVICE_API_KEY=DIN_CV_API_NØGLE
 
 Brug den offentlige Railway-URL uden afsluttende `/` og kun API-nøglen for CV-appen.
 API-nøglen må aldrig placeres i frontendkode.
+
+### Eventdelens miljøvariabler
+
+Hvis `/event` skal bruges på Railway, skal der også sættes `MONGODB_URI` og en lang, tilfældig `EVENT_COOKIE_SECRET`. Sæt `EVENT_ALLOWED_ORIGINS` til eventdelens præcise HTTPS-origin, hvis den ikke er `https://www.sebastiandrumm.dk` eller `https://sebastiandrumm.dk`. Flere origins adskilles med komma. WebSocket og eventformularer afviser andre origins.
 
 Hvis du bruger GitHub metoden:
 - Hver gang du pusher til `main` branch, deployer Railway automatisk

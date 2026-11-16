@@ -1,0 +1,83 @@
+[
+  {
+    "id": "rpa",
+    "title": "RPA",
+    "description": "Automatisering, procesdesign, fejlhåndtering og UI Reliability",
+    "questions": [
+      {"text":"Hvad står RPA for?","options":["Robotic Process Automation","Rapid Programming Application","Runtime Process Architecture"],"answer":0},
+      {"text":"Hvilken type opgave er bedst egnet til RPA?","options":["En opgave, hvor der skal træffes komplekse menneskelige beslutninger","En gentagende opgave med faste regler og strukturerede data","En opgave, der ændrer sig fuldstændigt hver dag"],"answer":1},
+      {"text":"Hvorfor bør man foretrække API'er eller direkte databaseadgang frem for UI-automatisering, når det er muligt?","options":["Fordi UI-automatisering ikke kan læse data","Fordi API'er altid kræver færre rettigheder","Fordi direkte integration typisk er mindre afhængig af ændringer i brugergrænsefladen"],"answer":2},
+      {"text":"Hvad er formålet med Data Cleaning i en RPA-proces?","options":["At sikre, at data er korrekte og anvendelige, før de behandles","At slette alle data efter hver automatisering","At gøre automatiseringen hurtigere ved at springe validering over"],"answer":0},
+      {"text":"Hvad beskriver en AS-IS-proces?","options":["Hvordan processen forventes at fungere efter automatisering","Hvordan processen fungerer i dag","Hvordan processen skal håndtere fremtidige fejl"],"answer":1},
+      {"text":"Hvad er hovedformålet med en TO-BE-proces?","options":["At dokumentere alle tidligere systemfejl","At kopiere den eksisterende proces uden ændringer","At beskrive en forbedret fremtidig proces"],"answer":2},
+      {"text":"Hvorfor bør en stor RPA-proces opdeles i mindre workflows?","options":["For at gøre processen lettere at vedligeholde, teste og fejlfinde","For at undgå at bruge variabler","For at sikre, at alle trin kører samtidigt"],"answer":0},
+      {"text":"Hvad er en stop condition i et automatiseret workflow?","options":["En regel, der bestemmer, hvornår processen skal pauses eller stoppes","En funktion, der automatisk genstarter computeren","En tidsforsinkelse, der indsættes efter hvert trin"],"answer":0},
+      {"text":"Hvilket af følgende er en Business Exception?","options":["En databaseforbindelse fejler","En obligatorisk oplysning mangler i en ordre","Et UI-element kan ikke findes"],"answer":1},
+      {"text":"Hvilket af følgende er en System Exception?","options":["En kunde mangler et obligatorisk ID","En ordre overskrider en tilladt beløbsgrænse","En fil er låst af et andet program"],"answer":2},
+      {"text":"Hvad er formålet med en Try/Catch/Finally-struktur?","options":["At håndtere fejl og sikre oprydning efter en operation","At gentage alle handlinger, indtil de lykkes","At forhindre alle fejl i at opstå"],"answer":0},
+      {"text":"Hvornår giver det bedst mening at bruge Retry?","options":["Når automatiseringen bruger en forkert selector","Når en midlertidig timeout eller forbindelsesfejl opstår","Når en forretningsregel afviser en ugyldig ordre"],"answer":1},
+      {"text":"Hvad bør ske, hvis den samme systemfejl opstår igen på næste element, ifølge undervisningens triage-model?","options":["Processen skal fortsætte uden logging","Alle tidligere behandlede elementer skal slettes","Processen skal stoppes efter den definerede retry-håndtering"],"answer":2},
+      {"text":"Hvilken tast bruges til at sætte et breakpoint i OpenRPA?","options":["F9","F5","F10"],"answer":0},
+      {"text":"Hvad er en selector i UI-automatisering?","options":["En funktion, der vælger programmeringssprog","En mekanisme til at identificere et bestemt UI-element","En metode til at gemme workflowets variabler"],"answer":1},
+      {"text":"Hvorfor kan dynamiske ID'er gøre en selector ustabil?","options":["Fordi de altid identificerer flere elementer","Fordi de forhindrer brug af ventebetingelser","Fordi de kan ændre sig mellem forskellige kørsler"],"answer":2},
+      {"text":"Hvilken ventemetode anbefales til en stabil UI-automatisering?","options":["At vente på, at det nødvendige UI-element er klar","At indsætte en fast ventetid på 10 sekunder efter hvert klik","At fjerne alle ventetider og bruge Retry i stedet"],"answer":0},
+      {"text":"En bot klikker nogle gange på den forkerte knap i en tabel. Hvad er den bedste løsning?","options":["At tilføje flere sekunders ventetid","At finde den korrekte række først og derefter knappen inden for rækken","At gentage klikket tre gange"],"answer":1},
+      {"text":"Hvilken PowerShell-kommando bruges til at hente filer og mapper fra en placering?","options":["Set-Variable","New-Item","Get-ChildItem"],"answer":2},
+      {"text":"Hvilke oplysninger er vigtigst at gemme i en log, når et RPA-trin fejler?","options":["Trinnets navn, fejlårsag, antal forsøg og slutstatus","Kun tidspunktet, hvor automatiseringen startede","Kun navnet på computeren, der kørte processen"],"answer":0}
+    ]
+  },
+  {
+    "id": "systemintegration",
+    "title": "Systemintegration",
+    "description": "API'er, protokoller, sikkerhed og arkitektur",
+    "questions": [
+      {"text":"Hvad er den vigtigste forskel mellem REST og SOAP?","options":["REST er en arkitekturstil, mens SOAP er en protokol.","REST bruger kun JSON, mens SOAP bruger både JSON og XML.","SOAP er en arkitekturstil, mens REST er en protokol."],"answer":0},
+      {"text":"Hvilken HTTP-metode bruges typisk til at oprette en ny ressource?","options":["PUT","GET","POST"],"answer":2},
+      {"text":"Hvad betyder det, at et REST API er stateless?","options":["Serveren gemmer automatisk alle tidligere requests.","Hver request skal indeholde den nødvendige information for at blive behandlet.","Klienten må ikke gemme data mellem requests."],"answer":1},
+      {"text":"Hvilket problem forsøger GraphQL især at løse?","options":["Overfetching og underfetching af data.","Manglende kryptering i HTTP.","Langsomme TCP-forbindelser."],"answer":0},
+      {"text":"Hvad bruges en mutation til i GraphQL?","options":["At abonnere på opdateringer i realtid.","At hente data uden at ændre dem.","At oprette, ændre eller slette data."],"answer":2},
+      {"text":"Hvad er formålet med en WSDL-fil i SOAP?","options":["At gemme brugerens adgangskode.","At beskrive webservicens operationer og kontrakt.","At oprette en TCP-forbindelse."],"answer":1},
+      {"text":"Hvilken del af en SOAP-besked indeholder normalt selve requesten eller responset?","options":["Body","Header","Envelope"],"answer":0},
+      {"text":"Hvilket dataformat anvender gRPC typisk til serialisering?","options":["XML","JSON","Protocol Buffers"],"answer":2},
+      {"text":"Hvad er en væsentlig fordel ved gRPC sammenlignet med et traditionelt JSON-baseret REST API?","options":["Det kræver aldrig en netværksforbindelse.","Det kan anvende kompakt binær serialisering og effektiv kommunikation.","Det fungerer direkte i alle browsere uden særlige løsninger."],"answer":1},
+      {"text":"Hvad betyder bidirectional streaming i gRPC?","options":["Klient og server kan sende flere beskeder til hinanden under samme RPC.","Serveren kan kun sende ét svar pr. request.","Klienten skal oprette en ny forbindelse for hver besked."],"answer":0},
+      {"text":"Hvad er formålet med et TCP three-way handshake?","options":["At kryptere data med en offentlig nøgle.","At oversætte domænenavne til IP-adresser.","At etablere en TCP-forbindelse mellem to enheder."],"answer":2},
+      {"text":"Hvad betyder HTTP-statuskoden 401 Unauthorized?","options":["Ressourcen er blevet slettet permanent.","Requesten mangler gyldig autentificering.","Serveren har gennemført requesten."],"answer":1},
+      {"text":"Hvad er forskellen på authentication og authorization?","options":["Authentication kontrollerer identitet, mens authorization kontrollerer adgangsrettigheder.","Authentication bestemmer adgangsrettigheder, mens authorization kontrollerer identitet.","Begge begreber betyder præcis det samme."],"answer":0},
+      {"text":"Hvad er formålet med OAuth 2.0?","options":["At erstatte HTTPS med en hurtigere protokol.","At konvertere XML til JSON.","At give en applikation begrænset adgang til beskyttede ressourcer via tokens."],"answer":2},
+      {"text":"Hvad er et eksempel på et Broken Object Level Authorization-angreb (BOLA)?","options":["En angriber sender for mange requests og overbelaster serveren.","En bruger ændrer et ressource-ID og får adgang til en anden brugers data.","En angriber indsætter JavaScript i en webside."],"answer":1},
+      {"text":"Hvad er en vigtig egenskab ved WebSockets?","options":["Klient og server kan kommunikere i begge retninger over en vedvarende forbindelse.","Serveren skal vente på en ny HTTP-request, før den kan sende hver besked.","WebSockets understøtter kun kommunikation fra server til klient."],"answer":0},
+      {"text":"Hvad er den primære forskel mellem en monolit og microservices?","options":["En monolit kræver SOAP, mens microservices kræver REST.","Microservices skal altid bruge forskellige programmeringssprog.","En monolit deployes som én samlet applikation, mens microservices kan deployes uafhængigt."],"answer":2},
+      {"text":"Hvad betyder CQRS?","options":["At alle databaseoperationer skal udføres asynkront.","At læseoperationer og skriveoperationer adskilles i forskellige modeller.","At hver microservice skal have præcis to databaser."],"answer":1},
+      {"text":"Hvad er formålet med database-sharding?","options":["At fordele data på tværs af flere databasenoder.","At lave identiske kopier af hele databasen.","At kryptere alle databasefelter automatisk."],"answer":0},
+      {"text":"Hvilken rolle har en message broker som RabbitMQ typisk i en systemintegration?","options":["At erstatte alle databaser i systemet.","At gøre alle API-kald synkrone.","At modtage og videresende beskeder mellem systemkomponenter."],"answer":2}
+    ]
+  },
+  {
+    "id": "large-systems",
+    "title": "Large Systems",
+    "description": "Distribuerede systemer, messaging, Docker, Kubernetes og drift",
+    "questions": [
+      {"text":"Hvad kendetegner et distribueret system?","options":["Alle komponenter kører på én computer","Flere selvstændige computere eller processer samarbejder via et netværk","Systemet kan kun anvende én database"],"answer":1},
+      {"text":"Hvad er en af de største fordele ved microservices?","options":["Hver service kan udvikles, deployes og skaleres uafhængigt","Alle services skal anvende samme programmeringssprog","Systemet behøver ikke netværkskommunikation"],"answer":0},
+      {"text":"Hvad betyder loose coupling i softwarearkitektur?","options":["Alle services deler den samme kodebase","Services skal kende hinandens interne implementering","Services har så få afhængigheder til hinanden som muligt"],"answer":2},
+      {"text":"Hvad bruges Event Storming primært til?","options":["At automatisere deployment","At kortlægge forretningsprocesser og domænehændelser","At måle serverens CPU-forbrug"],"answer":1},
+      {"text":"Hvad er forskellen på synkron og asynkron kommunikation?","options":["Synkron kommunikation afventer normalt et svar, mens asynkron kommunikation ikke kræver et øjeblikkeligt svar","Asynkron kommunikation kræver altid, at begge services er online samtidig","Synkron kommunikation kan kun anvendes mellem databaser"],"answer":0},
+      {"text":"Hvad er formålet med en message broker som RabbitMQ?","options":["At erstatte alle databaser","At kompilere og deploye microservices","At formidle beskeder mellem forskellige services"],"answer":2},
+      {"text":"Hvad betyder idempotency i forbindelse med message handling?","options":["At en besked altid skal behandles af flere services","At gentagen behandling af samme besked ikke skaber yderligere utilsigtede ændringer","At alle beskeder automatisk slettes efter behandling"],"answer":1},
+      {"text":"Hvad er formålet med en Dead Letter Queue (DLQ)?","options":["At gemme beskeder, som ikke kunne behandles korrekt","At prioritere beskeder med kortest behandlingstid","At opbevare alle beskeder, der er behandlet korrekt"],"answer":0},
+      {"text":"Hvad betyder eventual consistency?","options":["Alle databaser opdateres altid i samme transaktion","Data kan aldrig ændres efter oprettelse","Forskellige kopier af data kan midlertidigt være uenige, men vil konvergere, hvis der ikke kommer nye opdateringer"],"answer":2},
+      {"text":"Hvad er formålet med CQRS?","options":["At sikre, at alle services deler én database","At adskille operationer, der læser data, fra operationer, der ændrer data","At erstatte REST med GraphQL"],"answer":1},
+      {"text":"Hvad bruges Saga Pattern til i distribuerede systemer?","options":["At koordinere en forretningsproces på tværs af services med lokale transaktioner og eventuelle kompenserende handlinger","At samle alle microservices i én applikation","At sikre, at alle services deler samme databasetransaktion"],"answer":0},
+      {"text":"Hvad er forskellen på en Docker-container og en virtuel maskine?","options":["En container kræver altid sit eget operativsystem","En virtuel maskine kan ikke køre flere applikationer","Containere deler værtsmaskinens kernel, mens virtuelle maskiner har deres eget gæsteoperativsystem"],"answer":2},
+      {"text":"Hvad er formålet med Docker Compose?","options":["At oprette virtuelle maskiner i Azure","At definere og køre applikationer med flere containere","At overvåge Git-commits"],"answer":1},
+      {"text":"Hvad er en Pod i Kubernetes?","options":["Den mindste deployerbare enhed, som indeholder en eller flere containere","En fysisk server, der styrer hele clusteren","En database, der gemmer container-images"],"answer":0},
+      {"text":"Hvad er formålet med en Kubernetes Service?","options":["At bygge Docker-images fra kildekode","At oprette nye Git-branches","At give stabil netværksadgang og fordele trafik til relevante Pods"],"answer":2},
+      {"text":"Hvad betyder Continuous Integration (CI)?","options":["At software automatisk bliver offentliggjort til alle brugere","At kodeændringer integreres hyppigt og kontrolleres gennem automatiserede builds og tests","At udviklere først samler deres kode ved projektets afslutning"],"answer":1},
+      {"text":"Hvad er forskellen på Continuous Delivery og Continuous Deployment?","options":["Continuous Delivery gør software klar til release, mens Continuous Deployment automatisk releaser godkendte ændringer","Continuous Delivery kræver Docker, mens Continuous Deployment kræver Kubernetes","Continuous Delivery bruges kun til frontend, mens Continuous Deployment bruges kun til backend"],"answer":0},
+      {"text":"Hvad betyder Infrastructure as a Service (IaaS)?","options":["En færdig applikation, som brugeren tilgår gennem internettet","En platform, hvor udviklere kun uploader deres applikationskode","Virtuelle servere, netværk og lagerplads leveret som en cloud-service"],"answer":2},
+      {"text":"Hvad er formålet med horizontal scaling?","options":["At give en eksisterende server mere RAM og CPU","At tilføje flere instanser af en applikation for at håndtere større belastning","At flytte en applikation til en større harddisk"],"answer":1},
+      {"text":"Hvad er distributed tracing særligt nyttigt til?","options":["At følge en request gennem flere services for at identificere fejl og flaskehalse","At sikre, at alle databaser anvender samme tabeller","At erstatte behovet for logging og monitoring"],"answer":0}
+    ]
+  }
+]

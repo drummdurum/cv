@@ -36,7 +36,7 @@
   <meta name="twitter:image" content="https://www.sebastiandrumm.dk/filer/billedere/software-2979919_1920.jpg">
   
   <!-- Structured Data (JSON-LD) -->
-  <script type="application/ld+json">
+  <script nonce="<%= cspNonce %>" type="application/ld+json">
   {
     "@context": "https://schema.org",
     "@type": "Person",
@@ -154,7 +154,7 @@
     </div>
   </footer>
 
-  <style>
+  <style nonce="<%= cspNonce %>">
     /* Desktop nav hover - kun color change */
     .nav-link:hover {
       color: #111827;
@@ -180,7 +180,7 @@
     }
   </style>
 
-  <script>
+  <script nonce="<%= cspNonce %>">
     // Mobile menu toggle
     const btn = document.querySelector('.mobile-menu-button');
     const menu = document.querySelector('.mobile-menu');

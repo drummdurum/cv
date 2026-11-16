@@ -4,8 +4,25 @@ const path = require('path');
 const ejs = require('ejs');
 const { translateHtml } = require('./translations');
 const { sendContactEmails } = require('./services/mailService');
+const http = require('http');
+const events = require('./event/data');
+const { attachVoting } = require('./event/voting');
+const { startGrpcServer, createEchoClient } = require('./event/grpc');
+const { COOKIE, readParticipant, createParticipant } = require('./event/participant');
+const { connectDatabase, getDatabase } = require('./event/database');
+const { notifyAttendees, subscribeAttendees } = require('./event/attendeeUpdates');
+const crypto = require('crypto');
+const helmet = require('helmet');
+const { isAllowedOrigin, issueCsrf, requireCsrf } = require('./event/security');
+const quizzes = require('./event/questions.json');
+const { createSession, getSession } = require('./event/quizSessions');
+const QUIZ_GAME_ID = 'quiz-hub';
+const isJoinableGame = id => id === QUIZ_GAME_ID || events.some(event => event.id === id);
+const quizSummaries = quizzes.map(quiz => ({ id: quiz.id, title: quiz.title,
+  description: quiz.description, count: quiz.questions.length }));
 
 const app = express();
+const httpServer = http.createServer(app);
 const PORT = process.env.PORT || 3010;
 const CONTACT_WINDOW_MS = 15 * 60 * 1000;
 const CONTACT_MAX_REQUESTS = 5;
@@ -15,11 +32,47 @@ const contactRequests = new Map();
 app.set('view engine', 'ejs');
 app.set('views', path.join(__dirname, 'views'));
 app.set('trust proxy', 1);
+app.disable('x-powered-by');
+
+app.use((req, res, next) => {
+  req.cspNonce = crypto.randomBytes(16).toString('base64');
+  next();
+});
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: ["'self'", (req) => `'nonce-${req.cspNonce}'`],
+      styleSrc: ["'self'", (req) => `'nonce-${req.cspNonce}'`, 'https://fonts.googleapis.com'],
+      styleSrcAttr: ["'unsafe-inline'"],
+      fontSrc: ["'self'", 'https://fonts.gstatic.com'],
+      imgSrc: ["'self'", 'data:'],
+      frameSrc: ["'self'", 'https://www.youtube-nocookie.com'],
+      mediaSrc: ["'self'"],
+      connectSrc: ["'self'", 'ws:', 'wss:'],
+      objectSrc: ["'none'"],
+      baseUri: ["'self'"],
+      formAction: ["'self'"],
+      frameAncestors: ["'none'"],
+      upgradeInsecureRequests: null
+    }
+  },
+  hsts: false,
+  frameguard: { action: 'deny' },
+  referrerPolicy: { policy: 'strict-origin-when-cross-origin' }
+}));
+app.use((req, res, next) => req.secure ? helmet.hsts()(req, res, next) : next());
 
 // Static files
 app.use(express.static(path.join(__dirname, 'public')));
 app.use(express.json({ limit: '20kb' }));
 app.use(express.urlencoded({ extended: false, limit: '20kb' }));
+app.use((req, res, next) => {
+  if (req.method === 'POST' && !isAllowedOrigin(req.get('origin'))) {
+    return res.status(403).json({ error: 'Forespørgslen kommer ikke fra en tilladt side.' });
+  }
+  next();
+});
 
 // Helper function to render with layout
 const renderWithLayout = async (viewName, options, req, res) => {
@@ -28,6 +81,7 @@ const renderWithLayout = async (viewName, options, req, res) => {
     path.join(__dirname, 'views', `${viewName}.ejs`),
     {
       ...options,
+      cspNonce: req.cspNonce,
       language,
       cvDownloadUrl: language === 'en'
         ? '/filer/cv/Sebastian_Drumm_CV_EN.pdf'
@@ -37,6 +91,7 @@ const renderWithLayout = async (viewName, options, req, res) => {
 
   const html = await ejs.renderFile(path.join(__dirname, 'views', 'layout.ejs'), {
     ...options,
+    cspNonce: req.cspNonce,
     body,
     language,
     cvDownloadUrl: language === 'en'
@@ -110,6 +165,188 @@ app.get('/fritid', async (req, res) => {
   }, req, res);
 });
 
+// Eventdelen har sit eget layout og er ikke koblet til CV-navigationen.
+app.get('/event', (req, res) => res.render('event/index', { events, quizzes: quizSummaries }));
+app.get('/event/api/csrf', issueCsrf);
+
+app.get('/event/api/participant', async (req, res) => {
+  const db = getDatabase();
+  if (!db) return res.status(503).json({ error: 'Eventdatabasen er ikke tilgængelig.' });
+  const cookie = readParticipant(req.headers.cookie);
+  try {
+    const participant = cookie ? await db.collection('participants').findOne({ id: cookie.id }) : null;
+    const eventId = typeof req.query.event === 'string' ? req.query.event : '';
+    const enrolled = participant && isJoinableGame(eventId)
+      ? Boolean(await db.collection('enrollments').findOne({ eventId, participantId: participant.id }))
+      : false;
+    res.json({ participant: participant ? { name: participant.name, email: participant.email } : null, enrolled });
+  } catch (error) {
+    console.error('Participant lookup failed:', error);
+    res.status(503).json({ error: 'Deltageren kunne ikke hentes.' });
+  }
+});
+
+app.get('/event/api/attendees', async (req, res) => {
+  const eventId = typeof req.query.event === 'string' ? req.query.event : '';
+  if (!events.some(item => item.id === eventId)) return res.status(404).json({ error: 'Eventet blev ikke fundet.' });
+  const db = getDatabase();
+  if (!db) return res.status(503).json({ error: 'Eventdatabasen er ikke tilgængelig.' });
+  try {
+    const collection = db.collection('enrollments');
+    const [total, enrollments] = await Promise.all([
+      collection.countDocuments({ eventId }),
+      collection.find({ eventId }).sort({ createdAt: 1 }).limit(100).toArray()
+    ]);
+    const people = await db.collection('participants').find(
+      { id: { $in: enrollments.map(enrollment => enrollment.participantId) } },
+      { projection: { id: 1, name: 1 } }
+    ).toArray();
+    const names = new Map(people.map(person => [person.id, person.name]));
+    res.json({ total, attendees: enrollments.map(enrollment => names.get(enrollment.participantId)).filter(Boolean) });
+  } catch (error) {
+    console.error('Attendee lookup failed:', error);
+    res.status(503).json({ error: 'Deltagerlisten kunne ikke hentes.' });
+  }
+});
+
+app.get('/event/api/attendees/live', (req, res) => {
+  const eventId = typeof req.query.event === 'string' ? req.query.event : '';
+  if (!events.some(item => item.id === eventId)) return res.status(404).end();
+  res.set({
+    'Content-Type': 'text/event-stream',
+    'Cache-Control': 'no-cache, no-transform',
+    'Connection': 'keep-alive',
+    'X-Accel-Buffering': 'no'
+  });
+  res.flushHeaders();
+  res.write(': connected\n\n');
+  const unsubscribe = subscribeAttendees(eventId, () => res.write('data: updated\n\n'));
+  const heartbeat = setInterval(() => res.write(': ping\n\n'), 25000);
+  req.on('close', () => { clearInterval(heartbeat); unsubscribe(); });
+});
+
+app.post('/event/api/participant', requireCsrf, async (req, res) => {
+  const db = getDatabase();
+  if (!db) return res.status(503).json({ error: 'Eventdatabasen er ikke tilgængelig.' });
+  const eventId = typeof req.body.eventId === 'string' ? req.body.eventId : '';
+  if (!isJoinableGame(eventId)) return res.status(404).json({ error: 'Eventet blev ikke fundet.' });
+  const cookie = readParticipant(req.headers.cookie);
+  try {
+    const existing = cookie ? await db.collection('participants').findOne({ id: cookie.id }) : null;
+    if (existing) {
+      await db.collection('enrollments').updateOne(
+        { eventId, participantId: existing.id },
+        { $setOnInsert: { eventId, participantId: existing.id, createdAt: new Date() } },
+        { upsert: true }
+      );
+      notifyAttendees(eventId);
+      return res.json({ participant: { name: existing.name, email: existing.email }, enrolled: true });
+    }
+  } catch (error) {
+    console.error('Event enrollment failed:', error);
+    return res.status(503).json({ error: 'Tilmeldingen kunne ikke gemmes.' });
+  }
+  const name = typeof req.body.name === 'string' ? req.body.name.trim().replace(/\s+/g, ' ') : '';
+  const email = typeof req.body.email === 'string' ? req.body.email.trim().toLowerCase() : '';
+  if (name.length < 2 || name.length > 40 || /[<>\x00-\x1f]/.test(name)) {
+    return res.status(400).json({ error: 'Skriv et navn på 2–40 tegn.' });
+  }
+  if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email) || email.length > 254) return res.status(400).json({ error: 'Skriv en gyldig mailadresse.' });
+  const { participant, token } = createParticipant(name);
+  try {
+    await db.collection('participants').insertOne({ ...participant, email, createdAt: new Date() });
+    res.cookie(COOKIE, token, { httpOnly: true, secure: req.secure, sameSite: 'lax', maxAge: 365 * 24 * 60 * 60 * 1000, path: '/event' });
+    await db.collection('enrollments').insertOne({ eventId, participantId: participant.id, createdAt: new Date() });
+    notifyAttendees(eventId);
+    res.status(201).json({ participant: { name, email }, enrolled: true });
+  } catch (error) {
+    if (error.code === 11000) return res.status(409).json({ error: 'Mailadressen findes allerede. Åbn siden i den browser, hvor du først tilmeldte dig.' });
+    console.error('Participant registration failed:', error);
+    res.status(503).json({ error: 'Tilmeldingen kunne ikke gemmes.' });
+  }
+});
+
+async function quizParticipant(req, res, next) {
+  const eventId = typeof req.body.eventId === 'string' ? req.body.eventId : '';
+  if (!isJoinableGame(eventId)) return res.status(404).json({ error: 'Eventet blev ikke fundet.' });
+  const cookie = readParticipant(req.headers.cookie);
+  const db = getDatabase();
+  if (!cookie || !db) return res.status(401).json({ error: 'Tilmeld dig eventet for at spille quiz.' });
+  try {
+    const enrollment = await db.collection('enrollments').findOne({ eventId, participantId: cookie.id });
+    if (!enrollment) return res.status(403).json({ error: 'Tilmeld dig dette event for at spille quiz.' });
+    req.quizParticipant = cookie;
+    next();
+  } catch (error) {
+    console.error('Quiz enrollment lookup failed:', error);
+    res.status(503).json({ error: 'Quizzen er ikke tilgængelig lige nu.' });
+  }
+}
+
+app.post('/event/api/quiz/start', requireCsrf, quizParticipant, async (req, res) => {
+  const quiz = quizzes.find(item => item.id === req.body.quizId);
+  if (!quiz) return res.status(404).json({ error: 'Quizzen blev ikke fundet.' });
+  const session = createSession(req.body.eventId, req.quizParticipant.id, quiz.id);
+  try {
+    const updates = await session.request({ type: 'Start', game_id: req.body.eventId,
+      player_id: req.quizParticipant.id, quiz_id: quiz.id }, ['Question']);
+    res.json({ quiz: { id: quiz.id, title: quiz.title }, question: updates[0] });
+  } catch (error) {
+    session.close();
+    res.status(502).json({ error: error.message });
+  }
+});
+
+app.post('/event/api/quiz/answer', requireCsrf, quizParticipant, async (req, res) => {
+  const answerIndex = req.body.answerIndex;
+  if (!Number.isInteger(answerIndex) || answerIndex < 0 || answerIndex > 2) return res.status(400).json({ error: 'Vælg svar A, B eller C.' });
+  const session = getSession(req.body.eventId, req.quizParticipant.id);
+  if (!session) return res.status(409).json({ error: 'Start quizzen igen.' });
+  try {
+    const updates = await session.request({ type: 'Answer', answer_index: answerIndex }, ['Question', 'RoundEnd']);
+    const score = updates.find(update => update.type === 'Score');
+    const next = updates.at(-1);
+    if (next.type === 'RoundEnd') {
+      await getDatabase().collection('quizResults').updateOne(
+        { eventId: req.body.eventId, participantId: req.quizParticipant.id, quizId: session.quizId },
+        { $set: { score: next.score, total: next.total_questions, completedAt: new Date() } },
+        { upsert: true }
+      );
+    }
+    res.json({ result: score, next });
+  } catch (error) {
+    session.close();
+    res.status(502).json({ error: error.message });
+  }
+});
+
+app.get('/event/quiz/:id', (req, res) => {
+  const quiz = quizSummaries.find(item => item.id === req.params.id);
+  if (!quiz) return res.status(404).send('Quizzen blev ikke fundet.');
+  res.render('event/quiz', { quiz });
+});
+
+app.get('/event/:id', (req, res) => {
+  const event = events.find(item => item.id === req.params.id);
+  if (!event) return res.status(404).send('Eventet blev ikke fundet.');
+  res.render('event/detail', { event });
+});
+
+app.post('/event/api/echo', requireCsrf, async (req, res) => {
+  const participant = readParticipant(req.headers.cookie);
+  if (!participant) return res.status(401).json({ error: 'Skriv dit navn først.' });
+  const db = getDatabase();
+  if (!db || !await db.collection('participants').findOne({ id: participant.id })) return res.status(401).json({ error: 'Tilmeld dig eventdelen først.' });
+  const message = typeof req.body.message === 'string' ? req.body.message.trim() : '';
+  if (!message || message.length > 500) return res.status(400).json({ error: 'Skriv en besked på højst 500 tegn.' });
+  const client = createEchoClient();
+  client.Echo({ message, name: participant.name }, { deadline: Date.now() + 5000 }, (error, response) => {
+    client.close();
+    if (error) return res.status(error.code === 3 ? 400 : 502).json({ error: error.details || 'Echo svarer ikke lige nu.' });
+    res.json(response);
+  });
+});
+
 const contactRateLimit = (req, res, next) => {
   const now = Date.now();
   const recentRequests = (contactRequests.get(req.ip) || [])
@@ -144,7 +381,12 @@ app.post('/api/contact', contactRateLimit, async (req, res) => {
   }
 });
 
-app.listen(PORT, () => {
+attachVoting(httpServer, events);
+httpServer.listen(PORT, () => {
   console.log(`Server kører på http://localhost:${PORT}`);
   console.log(`Åbn din browser på http://localhost:${PORT}`);
 });
+startGrpcServer().then(({ port }) => console.log(`Echo gRPC kører på port ${port}`))
+  .catch(error => console.error('Echo gRPC kunne ikke starte:', error));
+connectDatabase().then(db => { if (db) console.log('Eventdatabasen er forbundet.'); })
+  .catch(error => console.error('Eventdatabasen kunne ikke forbindes:', error.message));

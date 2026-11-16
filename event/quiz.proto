@@ -1,0 +1,30 @@
+syntax = "proto3";
+
+package event;
+
+service QuizService {
+  rpc Play (stream QuizAction) returns (stream QuizUpdate);
+}
+
+message QuizAction {
+  string type = 1;
+  string game_id = 2;
+  string player_id = 3;
+  string quiz_id = 4;
+  int32 answer_index = 5;
+}
+
+message QuizUpdate {
+  string type = 1;
+  string game_id = 2;
+  string player_id = 3;
+  string quiz_id = 4;
+  int32 question_number = 5;
+  int32 total_questions = 6;
+  string question = 7;
+  repeated string options = 8;
+  int32 score = 9;
+  bool correct = 10;
+  int32 correct_option = 11;
+  string error = 12;
+}

@@ -1,5 +1,32 @@
 # Sebastian Drumm CV Website
 
+## Selvstændig eventdel
+
+### Kør med Docker Compose
+
+`docker-compose.yml` starter både appen og MongoDB. Opret en lokal `.env` med `MONGO_ROOT_PASSWORD` og `EVENT_COOKIE_SECRET` (se `.env.example`), og kør:
+
+```bash
+docker compose up --build -d
+```
+
+Åbn `http://localhost:3010/event`. MongoDBs data ligger i Docker-volumen `mongo_data`. `docker compose down` stopper containerne uden at slette data. Echo gRPC kan nås på `localhost:50051`. Begge porte er kun bundet til din egen computer. Hvis du allerede har en `.env` til mailservice, så tilføj blot de to nye variabler til den.
+
+
+Åbn `/event` for eventoversigten og `/event/:id` for et event. Eventdelen har eget layout og ingen links til CV-siden. Eksempeldata og spørgsmål ligger i `event/data.js`.
+
+Sæt `MONGODB_URI` til en MongoDB-forbindelsesstreng og eventuelt `MONGODB_DB` til databasenavnet (standard: `sebastian_event`). Personer med navn og mail oprettes én gang i `participants`, mens deres tilmeldinger til konkrete events ligger i `enrollments`. En genkendt person kan derfor tilmelde sig et andet event med ét klik. Chatbeskeder og stemmer gemmes også i MongoDB. Uden en fungerende database er tilmelding og chat utilgængelige; resten af CV-siden starter stadig.
+
+Afstemningen og chatten bruger WebSockets på `/event/ws`. Deltageren tilmelder sig med navn og mail. Serveren gemmer et deltager-id i en signeret, HttpOnly-cookie; mailen ligger kun i databasen. Sæt `EVENT_COOKIE_SECRET` til en lang, tilfældig værdi i drift, så identiteten overlever genstart. Uden bekræftelse af mail eller login kan en bruger stadig slette sin cookie og registrere sig med en anden mail. Man kan ændre sin stemme, og resultatet opdateres hos alle tilsluttede.
+
+Deltagerlisten opdateres live via Server-Sent Events på `/event/api/attendees/live`. Den viser kun navne og antal for det aktuelle event.
+
+Eventformularerne bruger et signeret CSRF-token, og WebSocket-forbindelser accepteres kun fra tilladte origins. Standardlisten omfatter `localhost:3010` og `sebastiandrumm.dk`; tilføj andre domæner via `EVENT_ALLOWED_ORIGINS` (kommasepareret). Appen sætter sikkerhedsheaders med Helmet. `package-lock.json` er versionsstyret; brug `npm ci` for reproducerbar installation.
+
+Echo bruger `event/echo.proto` og en gRPC-server på port `50051` (kan ændres med `GRPC_PORT`). Websiden kalder `/event/api/echo`, som videresender beskeden til gRPC-serveren. Den separate klient kan prøves med `npm run event:echo -- "Hej"`; en tom besked giver gRPC-status `INVALID_ARGUMENT`.
+
+På `/event` har quizzerne deres egen sektion med direkte links til `/event/quiz/:id`. Der er tre quizzer med 20 spørgsmål hver i `event/questions.json`: RPA, Systemintegration og Large Systems. Quizserveren bruger bidirektionel gRPC-streaming via `event/quiz.proto`: `Question`, `Score` efter hvert svar og `RoundEnd` til sidst. Express bygger bro mellem browseren og gRPC-streamen; `game_id` er `quiz-hub`, mens `player_id` er deltagerens id. Slutscore gemmes i MongoDB. En separat kommandolinjeklient kan prøves med `npm run event:quiz -- rpa` (eller `systemintegration` / `large-systems`).
+
 Et moderne CV website bygget med Node.js, Express, EJS og Tailwind CSS.
 
 ## 📋 Forudsætninger
