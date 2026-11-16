@@ -6,6 +6,7 @@
   <title>Eventer</title>
   <link rel="stylesheet" href="/event/event.css">
   <link rel="stylesheet" href="/event/gloegg.css">
+  <% if (guestRemovalEnabled) { %><link rel="stylesheet" href="/event/guest-admin.css"><% } %>
 </head>
 <body>
   <header class="site-header"><div class="shell header-inner"><a class="brand" href="/event">samlet<span>.</span></a><span class="header-note">Plads til gode oplevelser</span></div></header>
@@ -19,13 +20,27 @@
     </section>
     <section class="events-section" id="events"><div class="shell">
       <div class="section-heading"><div><div class="eyebrow light">KOMMENDE ARRANGEMENTER</div><h2>Find din næste<br><em>oplevelse.</em></h2></div><span><%= events.length %> eventer</span></div>
+      <% if (guestRemovalEnabled && guestNotice) { %><p role="status"><%= guestNotice %></p><% } %>
       <div class="event-grid">
         <% events.forEach((event, index) => { %>
+        <div>
         <a class="event-card<%= event.id === 'gloegg-og-hygge' ? ' gloegg-card' : '' %>" href="/event/<%= event.id %>">
           <div class="card-top"><span><%= String(index + 1).padStart(2, '0') %> / <%= event.category %></span><span class="card-arrow">↗</span></div>
           <div class="card-content"><div class="card-date"><%= event.date %> · <%= event.time %></div><h3><%= event.title %></h3><p><%= event.description %></p></div>
           <div class="card-bottom"><span><%= event.place %></span><strong>Udforsk eventet <span aria-hidden="true">→</span></strong></div>
         </a>
+        <% if (guestRemovalEnabled) { %>
+          <details class="guest-admin">
+            <summary>Fjern gæst</summary>
+            <form method="post" action="/event/admin/remove-guest">
+              <input type="hidden" name="eventId" value="<%= event.id %>">
+              <label>Gæstens mail <input type="email" name="email" maxlength="254" required></label>
+              <label>Adminnøgle <input type="password" name="adminKey" autocomplete="off" required></label>
+              <button type="submit">Fjern tilmelding</button>
+            </form>
+          </details>
+        <% } %>
+        </div>
         <% }) %>
       </div>
     </div></section>

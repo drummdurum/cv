@@ -166,7 +166,48 @@ app.get('/fritid', async (req, res) => {
 });
 
 // Eventdelen har sit eget layout og er ikke koblet til CV-navigationen.
-app.get('/event', (req, res) => res.render('event/index', { events, quizzes: quizSummaries }));
+const eventAdminKey = process.env.EVENT_ADMIN_KEY;
+const guestRemovalEnabled = Boolean(eventAdminKey && eventAdminKey.length >= 32);
+const guestRemovalStatus = {
+  removed: 'Gæsten er fjernet fra eventet.',
+  missing: 'Der blev ikke fundet en tilmelding med den mailadresse.',
+  denied: 'Adminnøglen er forkert.',
+  unavailable: 'Gæstelisten kunne ikke opdateres. Prøv igen.'
+};
+
+app.get('/event', (req, res) => res.render('event/index', {
+  events,
+  quizzes: quizSummaries,
+  guestRemovalEnabled,
+  guestNotice: Object.hasOwn(guestRemovalStatus, req.query.guest)
+    ? guestRemovalStatus[req.query.guest]
+    : ''
+}));
+
+app.post('/event/admin/remove-guest', async (req, res) => {
+  if (!guestRemovalEnabled) return res.sendStatus(404);
+  const key = typeof req.body.adminKey === 'string' ? req.body.adminKey : '';
+  const digest = value => crypto.createHash('sha256').update(value).digest();
+  if (!crypto.timingSafeEqual(digest(key), digest(eventAdminKey))) {
+    return res.redirect(303, '/event?guest=denied#events');
+  }
+  const { eventId } = req.body;
+  if (!events.some(event => event.id === eventId)) return res.sendStatus(404);
+  const email = typeof req.body.email === 'string' ? req.body.email.trim().toLowerCase() : '';
+  const db = getDatabase();
+  if (!db) return res.redirect(303, '/event?guest=unavailable#events');
+
+  try {
+    const participant = await db.collection('participants').findOne({ email }, { projection: { id: 1 } });
+    if (!participant) return res.redirect(303, '/event?guest=missing#events');
+    const result = await db.collection('enrollments').deleteOne({ eventId, participantId: participant.id });
+    if (!result.deletedCount) return res.redirect(303, '/event?guest=missing#events');
+    notifyAttendees(eventId);
+    return res.redirect(303, '/event?guest=removed#events');
+  } catch {
+    return res.redirect(303, '/event?guest=unavailable#events');
+  }
+});
 app.get('/event/api/csrf', issueCsrf);
 
 app.get('/event/api/participant', async (req, res) => {

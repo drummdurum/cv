@@ -1,0 +1,11 @@
+.guest-admin { margin: 12px 0 0; }
+.guest-admin summary { cursor: pointer; }
+.guest-admin form, .guest-admin label { display: grid; gap: 8px; }
+.guest-admin form { padding: 16px 0; }
+.guest-admin input, .guest-admin button {
+  width: 100%;
+  min-width: 0;
+  min-height: 44px;
+  padding: 8px 12px;
+  font-size: 16px;
+}
