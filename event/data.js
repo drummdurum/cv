@@ -1,5 +1,18 @@
 const events = [
   {
+    id: 'gloegg-og-hygge',
+    title: 'Gløgg & hygge',
+    category: 'Decemberhygge',
+    date: 'Fredag 4. december 2026',
+    time: 'Fra ca. 18.30',
+    place: 'Sundbyvestervej 75, 3. th.',
+    description: 'Jeg inviterer til gløgg og hygge fredag den 4. december. Kig forbi ved 18.30-tiden til et glas varm gløgg.',
+    details: 'Medbring gerne selv hyggen og måske lidt ekstra at drikke, hvis du ikke vil drikke gløgg hele aftenen. Måske kan der også hives en Irish coffee eller to frem. Ved 23-tiden eller omkring midnat går vi videre. Kærester, koner og mænd er også velkomne. Send dem bare linket!',
+    question: 'Skal vi have julemusik til gløggen?',
+    pollId: 'julemusik',
+    options: ['Ja tak til julemusik', 'Nej tak til julemusik']
+  },
+  {
     id: 'julefrokst',
     title: 'Julefrokost',
     category: 'Jul & fællesskab',

@@ -5,6 +5,7 @@
   <meta name="viewport" content="width=device-width, initial-scale=1">
   <title>Eventer</title>
   <link rel="stylesheet" href="/event/event.css">
+  <link rel="stylesheet" href="/event/gloegg.css">
 </head>
 <body>
   <header class="site-header"><div class="shell header-inner"><a class="brand" href="/event">samlet<span>.</span></a><span class="header-note">Plads til gode oplevelser</span></div></header>
@@ -20,7 +21,7 @@
       <div class="section-heading"><div><div class="eyebrow light">KOMMENDE ARRANGEMENTER</div><h2>Find din næste<br><em>oplevelse.</em></h2></div><span><%= events.length %> eventer</span></div>
       <div class="event-grid">
         <% events.forEach((event, index) => { %>
-        <a class="event-card" href="/event/<%= event.id %>">
+        <a class="event-card<%= event.id === 'gloegg-og-hygge' ? ' gloegg-card' : '' %>" href="/event/<%= event.id %>">
           <div class="card-top"><span><%= String(index + 1).padStart(2, '0') %> / <%= event.category %></span><span class="card-arrow">↗</span></div>
           <div class="card-content"><div class="card-date"><%= event.date %> · <%= event.time %></div><h3><%= event.title %></h3><p><%= event.description %></p></div>
           <div class="card-bottom"><span><%= event.place %></span><strong>Udforsk eventet <span aria-hidden="true">→</span></strong></div>

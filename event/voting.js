@@ -41,7 +41,7 @@ function attachVoting(server, events) {
 
   async function snapshot(event, db) {
     const votes = await db.collection('votes').aggregate([
-      { $match: { eventId: event.id } },
+      { $match: { eventId: event.id, pollId: event.pollId ?? null } },
       { $group: { _id: '$option', count: { $sum: 1 } } }
     ]).toArray();
     const counts = event.options.map((_, index) => votes.find(vote => vote._id === index)?.count || 0);
@@ -107,7 +107,7 @@ function attachVoting(server, events) {
       try {
         await db.collection('votes').updateOne(
           { eventId: event.id, participantId: participant.id },
-          { $set: { option: message.option, updatedAt: new Date() } },
+          { $set: { option: message.option, pollId: event.pollId ?? null, updatedAt: new Date() } },
           { upsert: true }
         );
         const update = await snapshot(event, db);
