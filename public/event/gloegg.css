@@ -92,7 +92,21 @@
     grid-template-areas: "category" "title" "intro" "photo" "facts";
     grid-template-rows: auto;
   }
-  .gloegg-portrait { width: min(100%, 400px); margin-top: 32px; }
+  .gloegg-event .detail-hero h1 { font-size: clamp(44px, 10vw, 64px); }
+  .gloegg-portrait { width: min(100%, 400px); margin: 32px auto 0; }
+  .gloegg-event .detail-facts {
+    display: grid;
+    grid-template-columns: repeat(2, minmax(0, 1fr));
+    gap: 20px 16px;
+  }
+  .gloegg-event .detail-facts > div:last-of-type,
+  .gloegg-event .participate-button { grid-column: 1 / -1; }
+  .gloegg-event .participate-button { margin: 0; min-height: 44px; }
+  .gloegg-event .main-column,
+  .gloegg-event .side-column { min-width: 0; }
+  .gloegg-event #known-email { overflow-wrap: anywhere; }
+  .gloegg-event .name-form-row :is(input, textarea) { font-size: 16px; }
+  .gloegg-event .vote-option { gap: 12px; }
 }
 
 @media (prefers-reduced-motion: reduce) {
