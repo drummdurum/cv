@@ -26,7 +26,7 @@
         <div>
         <a class="event-card<%= event.id === 'gloegg-og-hygge' ? ' gloegg-card' : '' %>" href="/event/<%= event.id %>">
           <div class="card-top"><span><%= String(index + 1).padStart(2, '0') %> / <%= event.category %></span><span class="card-arrow">↗</span></div>
-          <div class="card-content"><div class="card-date"><%= event.date %> · <%= event.time %></div><h3><%= event.title %></h3><p><%= event.description %></p></div>
+          <div class="card-content"><div class="card-date"><%= event.cancelled ? 'AFLYST · ' : '' %><%= event.date %> · <%= event.time %></div><h3><%= event.title %></h3><p><%= event.description %></p></div>
           <div class="card-bottom"><span><%= event.place %></span><strong>Udforsk eventet <span aria-hidden="true">→</span></strong></div>
         </a>
         <% if (guestRemovalEnabled) { %>
@@ -36,10 +36,12 @@
               <input type="hidden" name="eventId" value="<%= event.id %>">
               <label>Adminnøgle <input type="password" name="adminKey" autocomplete="off" required></label>
               <button type="submit">Tjek kalenderinvitationer</button>
+              <% if (event.startsAt && !event.cancelled) { %><button type="submit" name="operation" value="send_missing">Send manglende invitationer</button><% } %>
             </form>
             <% if (invitationReport?.eventId === event.id) { %>
               <% const labels = { sent: 'Sendt', queued: 'I kø', sending: 'Behandles', not_sent: 'Ikke sendt', failed: 'Fejlet', unknown: 'Uafklaret', unavailable: 'Eventets tidspunkt er ikke fastlagt' }; %>
               <div class="invitation-report" role="status">
+                <% if (invitationReport.notice) { %><p><%= invitationReport.notice %></p><% } %>
                 <% if (invitationReport.error) { %><p><%= invitationReport.error %></p><% } else { %>
                   <p><strong><%= invitationReport.rows.filter(row => row.status === 'sent').length %> af <%= invitationReport.rows.length %> invitationer er sendt.</strong></p>
                   <% if (!event.startsAt) { %><p>Kalenderinvitationer kræver en fastlagt dato og tid.</p><% } %>
@@ -47,13 +49,29 @@
                   <% if (invitationReport.total > invitationReport.rows.length) { %><p>Viser de første <%= invitationReport.rows.length %> af <%= invitationReport.total %> tilmeldte.</p><% } %>
                   <ul class="invitation-status-list">
                     <% invitationReport.rows.forEach(row => { %>
-                      <li><strong><%= row.name %></strong> — <%= labels[row.status] || 'Uafklaret' %><% if (row.sentAt) { %> · <%= new Date(row.sentAt).toLocaleString('da-DK', { timeZone: 'Europe/Copenhagen' }) %><% } %><% if (row.checkFailed) { %> (kunne ikke opdateres; viser senest gemte status)<% } %></li>
+                      <% const deliveries = { delivered: 'Leveret til mailserver', bounced: 'Afvist af mailserver', delayed: 'Levering forsinket', failed: 'Levering fejlet', complained: 'Markeret som spam', unknown: 'Levering ikke bekræftet' }; const replies = { accepted: 'Accepteret', declined: 'Afslået', tentative: 'Måske', needs_action: 'Intet kalendersvar' }; %>
+                      <li><strong><%= row.name %></strong> — <%= labels[row.status] || 'Uafklaret' %><% if (row.sentAt) { %> · <%= new Date(row.sentAt).toLocaleString('da-DK', { timeZone: 'Europe/Copenhagen' }) %><% } %><br><%= deliveries[row.deliveryStatus] || deliveries.unknown %> · <%= replies[row.calendarResponse] || replies.needs_action %><% if (row.checkFailed) { %> (kunne ikke opdateres; viser senest gemte status)<% } %></li>
                     <% }) %>
                   </ul>
-                  <p>“Sendt” betyder afsendt via mailservicen. Det viser ikke, om gæsten har accepteret invitationen.</p>
+                  <% if (invitationReport.cancellations?.length) { %>
+                    <h4>Kalenderaflysninger</h4><ul>
+                      <% invitationReport.cancellations.forEach(item => { %><li><%= item.name %> — <%= ({ SENT: 'Aflysning sendt', QUEUED: 'Aflysning i kø', FAILED: 'Aflysning fejlet' })[item.status] || 'Aflysning ikke bekræftet' %></li><% }) %>
+                    </ul>
+                  <% } %>
+                  <p>“Sendt” er mailafsendelse. Kalendersvar vises separat og opdateres, når du tjekker. Manglende svar betyder ikke et afslag.</p>
                 <% } %>
               </div>
             <% } %>
+          </details>
+          <details class="guest-admin">
+            <summary><%= event.cancelled ? 'Prøv resterende kalenderaflysninger igen' : 'Aflys hele eventet' %></summary>
+            <p>Eventet lukkes for tilmelding. Tilmeldte med en invitation får en kalenderaflysning.</p>
+            <form method="post" action="/event/admin/invitations">
+              <input type="hidden" name="eventId" value="<%= event.id %>">
+              <input type="hidden" name="operation" value="cancel_event">
+              <label>Adminnøgle <input type="password" name="adminKey" autocomplete="off" required></label>
+              <button type="submit">Aflys event og send kalenderaflysninger</button>
+            </form>
           </details>
           <details class="guest-admin">
             <summary>Fjern gæst</summary>

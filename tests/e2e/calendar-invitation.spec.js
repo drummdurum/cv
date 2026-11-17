@@ -39,6 +39,7 @@ test('tilmelding sender én kalenderinvitation og viser faktisk sendestatus', as
   const calendar = await (await request.get(`${mailpit}/api/v1/message/${own[0].ID}/part/${attachment.PartID}`)).text();
   expect(calendar).toContain('METHOD:REQUEST');
   expect(calendar).toContain('DTSTART:20261204T173000Z');
+  expect(calendar).toContain('DTEND:20261204T223000Z');
   expect(calendar.replace(/\r\n /g, '')).toContain(`mailto:${email}`);
 
   const anonymous = await browser.newContext({ baseURL });

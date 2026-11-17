@@ -89,6 +89,13 @@ function attachVoting(server, events) {
       recentByParticipant.set(participant.id, recent);
       let message;
       try { message = JSON.parse(raw.toString()); } catch { return; }
+      try {
+        if (!await db.collection('enrollments').findOne({ eventId: event.id, participantId: participant.id }) ||
+            await db.collection('eventCancellations').findOne({ _id: event.id })) {
+          socket.close(1008, 'Deltagelsen er afmeldt eller eventet aflyst');
+          return;
+        }
+      } catch { socket.close(1011, 'Databasefejl'); return; }
       if (message.type === 'chat') {
         const text = typeof message.text === 'string' ? message.text.trim() : '';
         if (!text || text.length > 500 || Date.now() - lastMessageAt < 1000) return;

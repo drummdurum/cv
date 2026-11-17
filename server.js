@@ -6,7 +6,8 @@ const { translateHtml } = require('./translations');
 const { sendContactEmails } = require('./services/mailService');
 const http = require('http');
 const events = require('./event/data');
-const { invitationStatus, ensureInvitation, refreshInvitation } = require('./event/invitations');
+const { invitationStatus, ensureInvitation, refreshInvitation, removeGuestWithCancellation } = require('./event/invitations');
+const { syncCalendarReplies, getCalendarInvitationStatus } = require('./services/mailService');
 const { attachVoting } = require('./event/voting');
 const { startGrpcServer, createEchoClient } = require('./event/grpc');
 const { COOKIE, readParticipant, createParticipant } = require('./event/participant');
@@ -170,14 +171,17 @@ app.get('/fritid', async (req, res) => {
 const eventAdminKey = process.env.EVENT_ADMIN_KEY;
 const guestRemovalEnabled = Boolean(eventAdminKey && eventAdminKey.length >= 32);
 const guestRemovalStatus = {
-  removed: 'Gæsten er fjernet fra eventet.',
+  removed: 'Gæsten er fjernet. En eventuel kalenderaflysning er lagt i mailkøen.',
   missing: 'Der blev ikke fundet en tilmelding med den mailadresse.',
   denied: 'Adminnøglen er forkert.',
-  unavailable: 'Gæstelisten kunne ikke opdateres. Prøv igen.'
+  unavailable: 'Gæsten er ikke fjernet: kalenderaflysningen kunne ikke lægges i kø. Prøv igen.'
 };
 
-const renderEventOverview = (req, res, invitationReport = null) => res.render('event/index', {
-  events,
+const renderEventOverview = async (req, res, invitationReport = null) => {
+  let cancelled = new Set();
+  try { cancelled = new Set((await getDatabase()?.collection('eventCancellations').find({}).toArray() || []).map(item => item._id)); } catch {}
+  return res.render('event/index', {
+  events: events.map(event => ({ ...event, cancelled: cancelled.has(event.id) })),
   quizzes: quizSummaries,
   guestRemovalEnabled,
   invitationReport,
@@ -185,6 +189,7 @@ const renderEventOverview = (req, res, invitationReport = null) => res.render('e
     ? guestRemovalStatus[req.query.guest]
     : ''
 });
+};
 app.get('/event', (req, res) => renderEventOverview(req, res));
 
 app.post('/event/admin/invitations', async (req, res) => {
@@ -192,7 +197,7 @@ app.post('/event/admin/invitations', async (req, res) => {
   res.set('Cache-Control', 'no-store');
   const event = events.find(item => item.id === req.body.eventId);
   if (!event) return res.sendStatus(404);
-  const report = { eventId: event.id, rows: [], total: 0, error: '' };
+  const report = { eventId: event.id, rows: [], cancellations: [], total: 0, error: '', notice: '' };
   const key = typeof req.body.adminKey === 'string' ? req.body.adminKey : '';
   const digest = value => crypto.createHash('sha256').update(value).digest();
   if (!crypto.timingSafeEqual(digest(key), digest(eventAdminKey))) {
@@ -207,20 +212,61 @@ app.post('/event/admin/invitations', async (req, res) => {
     return renderEventOverview(req, res, report);
   }
   try {
+    const operation = req.body.operation || 'check';
+    if (!['check', 'send_missing', 'cancel_event'].includes(operation)) return res.sendStatus(400);
+    const cancelled = await db.collection('eventCancellations').findOne({ _id: event.id });
+    if (operation === 'send_missing' && cancelled) {
+      report.error = 'Eventet er aflyst. Der sendes ikke nye invitationer.';
+      return renderEventOverview(req, res, report);
+    }
+    if (operation === 'cancel_event') {
+      await db.collection('eventCancellations').updateOne({ _id: event.id }, { $setOnInsert: { cancelledAt: new Date() } }, { upsert: true });
+      const enrollments = await db.collection('enrollments').find({ eventId: event.id }).toArray();
+      let removed = 0, failed = 0;
+      for (const enrollment of enrollments) {
+        const person = await db.collection('participants').findOne({ id: enrollment.participantId });
+        try {
+          if (person && await removeGuestWithCancellation(db, event, person)) removed++;
+          else failed++;
+        } catch { failed++; }
+      }
+      notifyAttendees(event.id);
+      report.notice = `Eventet er aflyst. ${removed} tilmeldinger er fjernet med eventuelle kalenderaflysninger i kø. ${failed} kunne ikke behandles; tryk Aflys event igen for at prøve dem igen.`;
+    } else {
+      try {
+        const sync = await syncCalendarReplies();
+        if (sync.status === 'not_configured') report.notice = 'Kalendersvar kræver Gmail OAuth-opsætning. Mailstatus kan stadig tjekkes.';
+        if (sync.status === 'partial') report.notice = 'Gmail blev delvist kontrolleret. Tryk Tjek igen om lidt for at fortsætte.';
+      } catch { report.notice = 'Gmail-svar kunne ikke opdateres. Viser senest kendte svar.'; }
+    }
     const filter = { eventId: event.id };
     report.total = await db.collection('enrollments').countDocuments(filter);
     const enrollments = await db.collection('enrollments').find(filter).sort({ createdAt: 1 }).limit(100).toArray();
     const people = await db.collection('participants').find({ id: { $in: enrollments.map(item => item.participantId) } }).toArray();
     const participants = new Map(people.map(person => [person.id, person]));
+    let submitted = 0;
     // Read status only: opening this overview never sends invitations.
     for (let offset = 0; offset < enrollments.length; offset += 5) {
       const rows = await Promise.all(enrollments.slice(offset, offset + 5).map(async enrollment => {
         const participant = participants.get(enrollment.participantId);
         if (!participant) return { name: 'Ukendt deltager', status: 'unknown', sentAt: null };
         const invitation = await refreshInvitation(db, event, participant);
+        if (operation === 'send_missing' && ['not_sent', 'failed'].includes(invitation.status) && !enrollment.cancelling) {
+          const sent = await ensureInvitation(db, event, participant);
+          if (['sent', 'queued', 'sending'].includes(sent.status)) submitted++;
+          return { name: participant.name, ...sent };
+        }
         return { name: participant.name, ...invitation };
       }));
       report.rows.push(...rows);
+    }
+    if (operation === 'send_missing') report.notice += ` ${submitted} manglende invitationer er sendt eller lagt i kø. Allerede sendte og uafklarede invitationer er sprunget over.`;
+    const cancellations = await db.collection('calendarCancellations').find({ eventId: event.id }).sort({ createdAt: -1 }).limit(100).toArray();
+    for (const item of cancellations) {
+      try {
+        const state = await getCalendarInvitationStatus(item.requestId);
+        report.cancellations.push({ name: item.name, status: state.status });
+      } catch { report.cancellations.push({ name: item.name, status: 'UNKNOWN' }); }
     }
   } catch (error) {
     console.error('Invitation overview failed:', error.message);
@@ -244,10 +290,10 @@ app.post('/event/admin/remove-guest', async (req, res) => {
   if (!db) return res.redirect(303, '/event?guest=unavailable#events');
 
   try {
-    const participant = await db.collection('participants').findOne({ email }, { projection: { id: 1 } });
+    const participant = await db.collection('participants').findOne({ email });
     if (!participant) return res.redirect(303, '/event?guest=missing#events');
-    const result = await db.collection('enrollments').deleteOne({ eventId, participantId: participant.id });
-    if (!result.deletedCount) return res.redirect(303, '/event?guest=missing#events');
+    const removed = await removeGuestWithCancellation(db, events.find(event => event.id === eventId), participant);
+    if (!removed) return res.redirect(303, '/event?guest=missing#events');
     notifyAttendees(eventId);
     return res.redirect(303, '/event?guest=removed#events');
   } catch {
@@ -322,13 +368,18 @@ app.post('/event/api/participant', requireCsrf, async (req, res) => {
   if (!isJoinableGame(eventId)) return res.status(404).json({ error: 'Eventet blev ikke fundet.' });
   const cookie = readParticipant(req.headers.cookie);
   try {
+    if (await db.collection('eventCancellations').findOne({ _id: eventId })) return res.status(409).json({ error: 'Eventet er aflyst.' });
     const existing = cookie ? await db.collection('participants').findOne({ id: cookie.id }) : null;
     if (existing) {
       await db.collection('enrollments').updateOne(
         { eventId, participantId: existing.id },
-        { $setOnInsert: { eventId, participantId: existing.id, createdAt: new Date() } },
+        { $setOnInsert: { eventId, participantId: existing.id, createdAt: new Date(), calendarUid: `${eventId}-${crypto.randomUUID()}@sebastiandrumm.dk` } },
         { upsert: true }
       );
+      if (await db.collection('eventCancellations').findOne({ _id: eventId })) {
+        await removeGuestWithCancellation(db, events.find(event => event.id === eventId), existing);
+        return res.status(409).json({ error: 'Eventet er aflyst.' });
+      }
       notifyAttendees(eventId);
       const invitation = await ensureInvitation(db, events.find(event => event.id === eventId), existing).catch(() => ({ status: 'unknown' }));
       return res.json({ participant: { name: existing.name, email: existing.email }, enrolled: true, invitation });
@@ -347,7 +398,12 @@ app.post('/event/api/participant', requireCsrf, async (req, res) => {
   try {
     await db.collection('participants').insertOne({ ...participant, email, createdAt: new Date() });
     res.cookie(COOKIE, token, { httpOnly: true, secure: req.secure, sameSite: 'lax', maxAge: 365 * 24 * 60 * 60 * 1000, path: '/event' });
-    await db.collection('enrollments').insertOne({ eventId, participantId: participant.id, createdAt: new Date() });
+    if (await db.collection('eventCancellations').findOne({ _id: eventId })) return res.status(409).json({ error: 'Eventet er aflyst.' });
+    await db.collection('enrollments').insertOne({ eventId, participantId: participant.id, createdAt: new Date(), calendarUid: `${eventId}-${crypto.randomUUID()}@sebastiandrumm.dk` });
+    if (await db.collection('eventCancellations').findOne({ _id: eventId })) {
+      await removeGuestWithCancellation(db, events.find(event => event.id === eventId), { ...participant, email });
+      return res.status(409).json({ error: 'Eventet er aflyst.' });
+    }
     notifyAttendees(eventId);
     const invitation = await ensureInvitation(db, events.find(event => event.id === eventId), { ...participant, email }).catch(() => ({ status: 'unknown' }));
     res.status(201).json({ participant: { name, email }, enrolled: true, invitation });
@@ -435,10 +491,13 @@ app.get('/event/quiz/:id', (req, res) => {
   res.render('event/quiz', { quiz });
 });
 
-app.get('/event/:id', (req, res) => {
+app.get('/event/:id', async (req, res) => {
   const event = events.find(item => item.id === req.params.id);
   if (!event) return res.status(404).send('Eventet blev ikke fundet.');
-  res.render('event/detail', { event });
+  try {
+    const cancelled = await getDatabase()?.collection('eventCancellations').findOne({ _id: event.id });
+    res.render('event/detail', { event: { ...event, cancelled: Boolean(cancelled) } });
+  } catch { res.status(503).send('Eventet kunne ikke hentes lige nu.'); }
 });
 
 app.post('/event/api/echo', requireCsrf, async (req, res) => {

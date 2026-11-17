@@ -19,7 +19,7 @@
       <a class="header-back" href="/event">← Alle eventer</a>
     <% } %>
   </div></header>
-  <main>
+  <main><% if (event.cancelled) { %><p class="shell" role="status">Dette event er aflyst. Der er lukket for tilmelding.</p><% } %>
     <section class="detail-hero shell" id="julefrokost-info">
       <% if (event.id === 'julefrokst') { %><div class="christmas-snow" aria-hidden="true"><span>✦</span><span>❄</span><span>✧</span><span>❄</span><span>✦</span><span>❄</span><span>✧</span><span>❄</span><span>✦</span><span>❄</span><span>✧</span><span>❄</span></div><div class="christmas-orb" aria-hidden="true">✷</div><div class="christmas-kicker">✦ &nbsp; EN AFTEN I DECEMBER &nbsp; ✦</div><% } %>
       <div class="eyebrow"><span class="eyebrow-line"></span> <%= event.category.toUpperCase() %></div>

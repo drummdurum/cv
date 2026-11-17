@@ -1,38 +1,59 @@
-# Kalenderinvitationer
+# Kalenderinvitationer – enkel eventadministration
 
-Når en deltager tilmelder sig et event med `startsAt`, opretter CV-appen en personlig iCalendar REQUEST og sender den via bouldeMailService. Status gemmes i `enrollments.invitation`. Mailfejl fjerner aldrig tilmeldingen.
+På `/event` findes under hvert event:
 
-## Opsætning
+- Tjek kalenderinvitationer: opdaterer afsendelse, maillevering og kalendersvar.
+- Send manglende invitationer: sender til tilmeldte uden invitation og prøver definitivt fejlede jobs igen. Allerede sendte og stadig uafklarede invitationer springes over. Knappen behandler de første 100 tilmeldte, som statusoversigten viser.
+- Fjern gæst: lægger en kalenderaflysning i kø før tilmeldingen fjernes. Hvis køen ikke kan kontaktes, bliver tilmeldingen stående til næste forsøg.
+- Aflys hele eventet: lukker for nye tilmeldinger og lægger kalenderaflysninger i kø. Ved fejl kan samme knap prøves igen for de resterende tilmeldte.
 
-Deploy både API og worker fra `C:\Users\sedru\vs\bouldeMailService` samt den opdaterede CV-app. Der er ikke foretaget deployment eller afsendt rigtige mails under udviklingen.
+Adminpanelerne kræver `EVENT_ADMIN_KEY` på mindst 32 tegn. Der er ingen ny loginfunktion, rettelse af mailadresser eller adgang fra en ny browser.
 
-CV-appens miljø skal indeholde de eksisterende `MAIL_SERVICE_URL` og `MAIL_SERVICE_API_KEY` (CV-nøglen), samt:
+## Gmail og maillevering
+
+Arrangøren for nye invitationer er `sedrumm@gmail.com`. Svar går til den adresse. Mailen sendes fortsat fra den verificerede SMTP/Resend-afsender på vegne af arrangøren, med SENT-BY i kalenderfilen. Klienternes konkrete visning skal stadig afprøves i Gmail/Outlook/Apple Kalender.
+
+CV-app:
 
 ```dotenv
+MAIL_SERVICE_URL=https://din-mailservice
+MAIL_SERVICE_API_KEY=din-cv-service-noegle
 MAIL_CALENDAR_ENDPOINT=/emails/calendar
-EVENT_ORGANIZER_EMAIL=no-reply@sebastiandrumm.dk
+EVENT_ORGANIZER_EMAIL=sedrumm@gmail.com
+EVENT_LEGACY_ORGANIZER_EMAIL=no-reply@sebastiandrumm.dk
 ```
 
-Organizer-adressen SKAL svare til adressen i mailworkerens `RESEND_FROM` eller `SMTP_FROM`. For lokal Mailpit med den eksisterende SMTP-afsender bruges `EVENT_ORGANIZER_EMAIL=no-reply@boulde.local`. Fra CV-appens Docker-container kan en mailservice på værtsmaskinen nås via `MAIL_SERVICE_URL=http://host.docker.internal:3101`. API og worker skal bruge samme Redis, kønavn og MongoDB. Mailservicens lokale Compose kræver eksplicit `MAIL_PROVIDER=smtp` for Mailpit.
+Den sidste adresse skal være den faktiske organizer fra gamle invitationer uden gemt snapshot. Nye invitationer gemmer organizer og eventoplysninger selv. Gamle invitationer flyttes ikke automatisk til Gmail-arrangøren.
 
-Gløgg har start 4. december 2026 kl. 18.30 dansk tid. Sluttidspunkt er ikke angivet; kalenderen indeholder derfor kun starttidspunktet. Tilføj `endsAt` i eventdata når tidspunktet kendes. Events uden `startsAt` og quizzer sender ingen invitation.
+Mailservicens API:
 
-## Flow og status
+```dotenv
+CALENDAR_ORGANIZER_EMAIL=sedrumm@gmail.com
+GMAIL_CLIENT_ID=
+GMAIL_CLIENT_SECRET=
+GMAIL_REFRESH_TOKEN=
+RESEND_WEBHOOK_SECRET=
+```
 
-På `/event` har hvert event et adminpanel “Kalenderinvitationer”. Indtast den eksisterende `EVENT_ADMIN_KEY` og tryk Tjek kalenderinvitationer for at opdatere status fra mailservicen. Panelet vises når EVENT_ADMIN_KEY er mindst 32 tegn. Oversigten viser navn, status og afsendelsestid i dansk tidszone, højst de første 100 tilmeldte. Svaret caches ikke, adminnøglen vises ikke igen, og kontrollen sender ingen mails. Ved utilgængelig mailservice markeres den gemte status som ikke opdateret.
+Mailservicens worker får samme CALENDAR_ORGANIZER_EMAIL og sine eksisterende SMTP/Resend-variabler. Resend-afsenderen skal fortsat bruge et verificeret domæne; sæt ikke RESEND_FROM til Gmail-adressen.
 
-`POST /emails/calendar` i mailservicen modtager requestId, recipient, name, subject og calendar (method, filename og content). Et stabilt kalender-UID af event-id og deltager-id giver et deterministisk, app-afgrænset kø-id. BullMQ deduplikerer køjobs, og den permanente afsendelseslog forhindrer genafsendelse af afsluttede invitationer efter køoprydning.
+Aktivér Gmail API i Google Cloud. Opret OAuth-klient og autorisér **sedrumm@gmail.com** med `https://www.googleapis.com/auth/gmail.readonly` og offline-adgang. Gem klient-id, klienthemmelighed og refresh token som servermiljøvariabler; del dem ikke i chat eller Git. OAuth-app i ekstern testtilstand kan have kortlivede refresh tokens, så brug en opsætning beregnet til fortsat personlig brug. Serveren kontrollerer, at OAuth-kontoen matcher arrangøren. Den ændrer eller sletter ingen mails.
 
-Mailworkeren kontrollerer kalenderens organizer og attendee mod mailens afsender og modtager, og sender en enkelt mail med tekst, HTML og kalenderinvitation. SMTP bruger Nodemailers kalenderdel. Resend bruger en base64-kodet .ics-vedhæftning med `text/calendar; charset=utf-8; method=REQUEST`. Mailklienten bestemmer, hvordan invitationen vises.
+Når admin trykker Tjek, læser mailservicen kalenderfiler fra de seneste 90 dage i Gmail. Beskeder behandles én gang og caches i mailservicens database. Der er ingen konstant baggrundssynkronisering. Ved mange beskeder/tidsgrænsen vises delvis kontrol, og du kan trykke igen. Kun REPLY-filer med korrekt organizer, kalender-UID, matchende mailafsender og modtager samt Gmail-bekræftet DMARC accepteres. Klienter, der ikke sender et svar, bliver stående som Intet kalendersvar. Svar ændrer ikke tilmeldingen på hjemmesiden.
 
-Knappen Tjek invitation og genindlæsning henter den faktiske status fra det nøglebeskyttede `GET /emails/calendar/:requestId`. CV-API'et tillader kun den signerede deltager at hente eller anmode om sin egen invitation. En deltager uden invitation kan trykke Prøv at sende invitation. Sidevisning alene sender ingen mail. Der er ingen masseafsendelse.
+For levering: opret Resend-webhook til `https://din-mailservice/webhooks/resend`, og vælg `email.delivered`, `email.bounced`, `email.delivery_delayed`, `email.failed` og `email.complained`. Gem webhookens signeringshemmelighed i RESEND_WEBHOOK_SECRET på API'et. Usignerede og for gamle signaturer afvises. Leveringsstatus er uafhængig af kalendersvar; leveret betyder modtagerens mailserver, ikke nødvendigvis indbakken. SMTP/Mailpit giver ingen bekræftet leveringsstatus.
 
-Statusser: `not_sent` (afsendelse er ikke startet), `sending` (behandles), `queued` (i kø), `sent` (mailtransporten har accepteret mailen), `failed` (jobbet er fejlet), `unknown` (udfald ukendt). Sent beviser hverken levering, læsning eller accept i kalenderen. Worker genforsøger midlertidige fejl op til fem gange. Ukendte udfald genudsendes ikke automatisk fra CV-appen. Hvis processen stopper før køoprettelse, kan sending/unknown kræve manuel afklaring. SMTP kan som andre mailtransporter give dubletter ved nedbrud efter transportaccept men før logning.
+Google-dokumentation: https://developers.google.com/workspace/gmail/api/auth/web-server
+Resend-webhooks: https://resend.com/docs/dashboard/webhooks/introduction
 
-## Kontrol, som Sebastian selv kører
+## Tekniske rammer
 
-Verificeret 17. november 2026: 17 unit tests og 1 integrationstest i mailservicen består. CV-appens 9 browser/gRPC-tests inklusive kalenderflow består; 1 test med rigtig mail er sprunget over. Kalenderflowet blev kørt med isolerede Docker-databaser og SMTP/Mailpit, inklusive kontrol af .ics-indhold, korrekt dansk starttid, vedvarende sendestatus, deduplikering og adgangskontrol. Ingen eksterne mails blev sendt.
+Invite-id'et er stabilt for en tilmelding. Aflysning bruger samme kalender-UID, METHOD:CANCEL og en højere SEQUENCE. Genindmeldelse efter fjernelse får et nyt UID. Køen og afsendelsesloggen beskytter mod gentagne klik. En aflysningsmarkør forhindrer forsinkede første invitationer i at genoprette en aflyst aftale. Som med anden SMTP kan et nedbrud mellem transportaccept og logning give dubletter.
 
-Start mailservicen efter dens README og CV-projektet med `docker compose up --build -d`. Kør mailservicens `npm test` (inklusive tests/calendar.test.ts) og `npm run build`; kør CV-projektets `npm run test:e2e`.
+Gløgg er 4. december 2026 kl. 18.30–23.30 dansk tid. Kalenderfilen bruger DTSTART 17.30 UTC og DTEND 22.30 UTC. Events uden et startsAt sender ingen invitationer.
 
-Kontrollér ny tilmelding, kendt deltager, genindlæsning og dobbelte klik. Tjek status fra queued til sent. Kontrollér .ics-filen i Mailpit og kalenderens dato/tid i en rigtig mailklient. Afprøv forkert organizer og utilgængelig mailservice: tilmeldingen skal bevares, og status må ikke fejlagtigt vise sendt. Kontrollér at en anden deltager ikke kan hente eller sende din invitation.
+Deploy både CV og mailservicens API/worker. OAuth og webhook er implementeret, men den rigtige Gmail-konto/Resend-webhook er ikke tilsluttet under udviklingen. Der er ikke sendt rigtige mails eller ændret i Gmail.
+
+## Tests
+
+`npm test` i mailservicen tester kalenderkontrakt, REQUEST/CANCEL-transport, kø-genforsøg samt afvisning af falske eller irrelevante kalendersvar. CV har en særskilt `tests/e2e/calendar-lifecycle.spec.js`, der kræver isolerede Docker-testcontainere og Mailpit; den opretter bevidst testtilmeldinger og aflyser testeventet. Kør den aldrig mod drift.

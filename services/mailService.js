@@ -34,7 +34,7 @@ const postJson = (url, apiKey, payload, endpoint = '/emails/contact', method = '
     });
   });
 
-  request.setTimeout(10000, () => request.destroy(new Error('Mailservice timed out')));
+  request.setTimeout(endpoint === '/calendar/replies/sync' ? 45000 : 10000, () => request.destroy(new Error('Mailservice timed out')));
   request.on('error', reject);
   if (body) request.write(body);
   request.end();
@@ -80,4 +80,9 @@ const getCalendarInvitationStatus = async requestId => {
     `/emails/calendar/${encodeURIComponent(requestId)}`, 'GET');
 };
 
-module.exports = { sendContactEmails, sendCalendarInvitation, getCalendarInvitationStatus };
+const syncCalendarReplies = async () => {
+  const config = getConfig();
+  return postJson(config.serviceUrl, config.apiKey, {}, '/calendar/replies/sync');
+};
+
+module.exports = { sendContactEmails, sendCalendarInvitation, getCalendarInvitationStatus, syncCalendarReplies };

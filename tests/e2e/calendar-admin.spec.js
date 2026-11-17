@@ -9,7 +9,7 @@ test('eventoversigten beskytter kalenderstatus og viser de tilmeldtes invitation
   await page.locator('#name-form button').click();
   await expect(page.locator('#participant-display')).toContainText('Kalender Admin Test');
   await page.goto('/event');
-  const panel = page.locator('details').filter({ has: page.locator('form[action="/event/admin/invitations"] input[value="gloegg-og-hygge"]') });
+  const panel = page.locator('details').filter({ has: page.locator('form[action="/event/admin/invitations"] input[value="gloegg-og-hygge"]') }).filter({ has: page.getByRole('button', { name: 'Tjek kalenderinvitationer', exact: true, includeHidden: true }) });
   await panel.getByText('Kalenderinvitationer', { exact: true }).click();
   await panel.getByLabel('Adminnøgle').fill('forkert');
   await panel.getByRole('button', { name: 'Tjek kalenderinvitationer' }).click();
