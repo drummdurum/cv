@@ -176,14 +176,59 @@ const guestRemovalStatus = {
   unavailable: 'Gæstelisten kunne ikke opdateres. Prøv igen.'
 };
 
-app.get('/event', (req, res) => res.render('event/index', {
+const renderEventOverview = (req, res, invitationReport = null) => res.render('event/index', {
   events,
   quizzes: quizSummaries,
   guestRemovalEnabled,
+  invitationReport,
   guestNotice: Object.hasOwn(guestRemovalStatus, req.query.guest)
     ? guestRemovalStatus[req.query.guest]
     : ''
-}));
+});
+app.get('/event', (req, res) => renderEventOverview(req, res));
+
+app.post('/event/admin/invitations', async (req, res) => {
+  if (!guestRemovalEnabled) return res.sendStatus(404);
+  res.set('Cache-Control', 'no-store');
+  const event = events.find(item => item.id === req.body.eventId);
+  if (!event) return res.sendStatus(404);
+  const report = { eventId: event.id, rows: [], total: 0, error: '' };
+  const key = typeof req.body.adminKey === 'string' ? req.body.adminKey : '';
+  const digest = value => crypto.createHash('sha256').update(value).digest();
+  if (!crypto.timingSafeEqual(digest(key), digest(eventAdminKey))) {
+    report.error = 'Adminnøglen er forkert.';
+    res.status(403);
+    return renderEventOverview(req, res, report);
+  }
+  const db = getDatabase();
+  if (!db) {
+    report.error = 'Eventdatabasen er ikke tilgængelig. Prøv igen.';
+    res.status(503);
+    return renderEventOverview(req, res, report);
+  }
+  try {
+    const filter = { eventId: event.id };
+    report.total = await db.collection('enrollments').countDocuments(filter);
+    const enrollments = await db.collection('enrollments').find(filter).sort({ createdAt: 1 }).limit(100).toArray();
+    const people = await db.collection('participants').find({ id: { $in: enrollments.map(item => item.participantId) } }).toArray();
+    const participants = new Map(people.map(person => [person.id, person]));
+    // Read status only: opening this overview never sends invitations.
+    for (let offset = 0; offset < enrollments.length; offset += 5) {
+      const rows = await Promise.all(enrollments.slice(offset, offset + 5).map(async enrollment => {
+        const participant = participants.get(enrollment.participantId);
+        if (!participant) return { name: 'Ukendt deltager', status: 'unknown', sentAt: null };
+        const invitation = await refreshInvitation(db, event, participant);
+        return { name: participant.name, ...invitation };
+      }));
+      report.rows.push(...rows);
+    }
+  } catch (error) {
+    console.error('Invitation overview failed:', error.message);
+    report.error = 'Invitationernes status kunne ikke hentes. Prøv igen.';
+    res.status(503);
+  }
+  return renderEventOverview(req, res, report);
+});
 
 app.post('/event/admin/remove-guest', async (req, res) => {
   if (!guestRemovalEnabled) return res.sendStatus(404);

@@ -1,5 +1,8 @@
 .guest-admin { margin: 12px 0 0; }
 .guest-admin summary { cursor: pointer; }
+.invitation-report { font-size: 14px; line-height: 1.6; overflow-wrap: anywhere; }
+.invitation-status-list { padding-left: 20px; }
+.invitation-status-list li { margin: 10px 0; }
 .guest-admin form, .guest-admin label { display: grid; gap: 8px; }
 .guest-admin form { padding: 16px 0; }
 .guest-admin input, .guest-admin button {

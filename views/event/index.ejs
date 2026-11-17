@@ -30,6 +30,31 @@
           <div class="card-bottom"><span><%= event.place %></span><strong>Udforsk eventet <span aria-hidden="true">→</span></strong></div>
         </a>
         <% if (guestRemovalEnabled) { %>
+          <details class="guest-admin" <%= invitationReport?.eventId === event.id ? 'open' : '' %>>
+            <summary>Kalenderinvitationer</summary>
+            <form method="post" action="/event/admin/invitations">
+              <input type="hidden" name="eventId" value="<%= event.id %>">
+              <label>Adminnøgle <input type="password" name="adminKey" autocomplete="off" required></label>
+              <button type="submit">Tjek kalenderinvitationer</button>
+            </form>
+            <% if (invitationReport?.eventId === event.id) { %>
+              <% const labels = { sent: 'Sendt', queued: 'I kø', sending: 'Behandles', not_sent: 'Ikke sendt', failed: 'Fejlet', unknown: 'Uafklaret', unavailable: 'Eventets tidspunkt er ikke fastlagt' }; %>
+              <div class="invitation-report" role="status">
+                <% if (invitationReport.error) { %><p><%= invitationReport.error %></p><% } else { %>
+                  <p><strong><%= invitationReport.rows.filter(row => row.status === 'sent').length %> af <%= invitationReport.rows.length %> invitationer er sendt.</strong></p>
+                  <% if (!event.startsAt) { %><p>Kalenderinvitationer kræver en fastlagt dato og tid.</p><% } %>
+                  <% if (!invitationReport.total) { %><p>Ingen tilmeldte endnu.</p><% } %>
+                  <% if (invitationReport.total > invitationReport.rows.length) { %><p>Viser de første <%= invitationReport.rows.length %> af <%= invitationReport.total %> tilmeldte.</p><% } %>
+                  <ul class="invitation-status-list">
+                    <% invitationReport.rows.forEach(row => { %>
+                      <li><strong><%= row.name %></strong> — <%= labels[row.status] || 'Uafklaret' %><% if (row.sentAt) { %> · <%= new Date(row.sentAt).toLocaleString('da-DK', { timeZone: 'Europe/Copenhagen' }) %><% } %><% if (row.checkFailed) { %> (kunne ikke opdateres; viser senest gemte status)<% } %></li>
+                    <% }) %>
+                  </ul>
+                  <p>“Sendt” betyder afsendt via mailservicen. Det viser ikke, om gæsten har accepteret invitationen.</p>
+                <% } %>
+              </div>
+            <% } %>
+          </details>
           <details class="guest-admin">
             <summary>Fjern gæst</summary>
             <form method="post" action="/event/admin/remove-guest">

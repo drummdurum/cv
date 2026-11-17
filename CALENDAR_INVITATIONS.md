@@ -19,6 +19,8 @@ Gløgg har start 4. december 2026 kl. 18.30 dansk tid. Sluttidspunkt er ikke ang
 
 ## Flow og status
 
+På `/event` har hvert event et adminpanel “Kalenderinvitationer”. Indtast den eksisterende `EVENT_ADMIN_KEY` og tryk Tjek kalenderinvitationer for at opdatere status fra mailservicen. Panelet vises når EVENT_ADMIN_KEY er mindst 32 tegn. Oversigten viser navn, status og afsendelsestid i dansk tidszone, højst de første 100 tilmeldte. Svaret caches ikke, adminnøglen vises ikke igen, og kontrollen sender ingen mails. Ved utilgængelig mailservice markeres den gemte status som ikke opdateret.
+
 `POST /emails/calendar` i mailservicen modtager requestId, recipient, name, subject og calendar (method, filename og content). Et stabilt kalender-UID af event-id og deltager-id giver et deterministisk, app-afgrænset kø-id. BullMQ deduplikerer køjobs, og den permanente afsendelseslog forhindrer genafsendelse af afsluttede invitationer efter køoprydning.
 
 Mailworkeren kontrollerer kalenderens organizer og attendee mod mailens afsender og modtager, og sender en enkelt mail med tekst, HTML og kalenderinvitation. SMTP bruger Nodemailers kalenderdel. Resend bruger en base64-kodet .ics-vedhæftning med `text/calendar; charset=utf-8; method=REQUEST`. Mailklienten bestemmer, hvordan invitationen vises.
