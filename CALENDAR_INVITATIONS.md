@@ -1,5 +1,7 @@
 # Kalenderinvitationer – enkel eventadministration
 
+**Direkte Google Kalender:** Se `GOOGLE_CALENDAR_SETUP.md` for den separate opsætning til sebastiandrumm.dk. Med EVENT_CALENDAR_PROVIDER=google bruges Google til nye invitationer og kalendersvar; kontaktformularen og ældre mailinvitationer bruger stadig mailservicen. Nedenstående beskriver mailvarianten.
+
 På `/event` findes under hvert event:
 
 - Tjek kalenderinvitationer: opdaterer afsendelse, maillevering og kalendersvar.

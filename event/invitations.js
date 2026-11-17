@@ -1,10 +1,12 @@
 const { createCalendarInvitation } = require('./calendar');
 const { sendCalendarInvitation, getCalendarInvitationStatus } = require('../services/mailService');
+const googleCalendar = require('../services/googleCalendar');
 
 function invitationStatus(enrollment, event) {
   if (!event?.startsAt) return { status: 'unavailable' };
   const invitation = enrollment?.invitation;
   return { status: invitation?.status || 'not_sent', sentAt: invitation?.sentAt || null,
+    provider: invitation?.provider || 'mail', calendarUrl: invitation?.calendarUrl || null, owner: Boolean(invitation?.owner),
     deliveryStatus: invitation?.deliveryStatus || 'unknown', calendarResponse: invitation?.calendarResponse || 'needs_action' };
 }
 
@@ -13,6 +15,7 @@ async function ensureInvitation(db, event, participant) {
   const key = { eventId: event?.id, participantId: participant.id };
   if (!event?.startsAt) return { status: 'unavailable' };
   if (await db.collection('eventCancellations').findOne({ _id: event.id })) return { status: 'unavailable' };
+  if (googleCalendar.enabled()) return ensureGoogleInvitation(db, event, participant);
   // Atomic claim prevents double-clicks and concurrent requests from sending twice.
   // Ambiguous timeouts stay unknown: do not automatically risk a duplicate.
   const claimed = await collection.findOneAndUpdate({ ...key, cancelling: { $ne: true }, $or: [
@@ -53,6 +56,17 @@ async function refreshInvitation(db, event, participant) {
   const collection = db.collection('enrollments');
   const key = { eventId: event?.id, participantId: participant.id };
   const enrollment = await collection.findOne(key);
+  if (enrollment?.invitation?.provider === 'google' || (enrollment?.googleMigration?.legacyCancelled && googleCalendar.enabled())) {
+    try {
+      const state = await googleCalendar.guestStatus(event, participant);
+      state.sentAt = state.status === 'sent' ? enrollment.invitation.sentAt || new Date() : null;
+      await collection.updateOne({ ...key, $or: [{ 'invitation.provider': 'google' }, { 'googleMigration.legacyCancelled': true }] }, { $set: { invitation: state } });
+      return invitationStatus({ invitation: state }, event);
+    } catch (error) {
+      console.error('Google Calendar status failed:', error.message);
+      return { ...invitationStatus(enrollment, event), checkFailed: true };
+    }
+  }
   if (!enrollment || !event?.startsAt || !enrollment.invitation) {
     return invitationStatus(enrollment, event);
   }
@@ -81,10 +95,7 @@ async function refreshInvitation(db, event, participant) {
   return invitationStatus(enrollment, event);
 }
 
-async function removeGuestWithCancellation(db, event, participant) {
-  const key = { eventId: event.id, participantId: participant.id };
-  const enrollment = await db.collection('enrollments').findOneAndUpdate(key, { $set: { cancelling: true } }, { returnDocument: 'after' });
-  if (!enrollment) return false;
+async function cancelMailInvitation(db, event, participant, enrollment) {
   const status = enrollment.invitation?.status;
   if (status === 'sending' && !enrollment.calendarSnapshot) throw new Error('Invitationen behandles stadig. Prøv igen om lidt.');
   if (event.startsAt && status && status !== 'not_sent') {
@@ -103,6 +114,49 @@ async function removeGuestWithCancellation(db, event, participant) {
       status: result.status, createdAt: new Date()
     } }, { upsert: true });
   }
+}
+
+async function ensureGoogleInvitation(db, event, participant) {
+  const key = { eventId: event.id, participantId: participant.id };
+  const collection = db.collection('enrollments');
+  const enrollment = await collection.findOne(key);
+  if (!enrollment || enrollment.cancelling) return { status: 'unavailable' };
+  try {
+    await googleCalendar.checkConnection();
+    // Explicit migration keeps the previous ICS event from remaining alongside Google.
+    if (enrollment.invitation?.provider !== 'google' && !enrollment.googleMigration?.legacyCancelled) {
+      await cancelMailInvitation(db, event, participant, enrollment);
+      await collection.updateOne(key, { $set: { googleMigration: { legacyCancelled: true } } });
+    }
+    const result = await googleCalendar.addGuest(event, participant);
+    const latest = await collection.findOne(key);
+    const cancelled = await db.collection('eventCancellations').findOne({ _id: event.id });
+    if (!latest || latest.cancelling || cancelled) {
+      if (cancelled) await googleCalendar.cancelEvent(event);
+      else await googleCalendar.removeGuest(event, participant);
+      return { status: 'unavailable' };
+    }
+    const state = { ...result, sentAt: enrollment.invitation?.provider === 'google' ? enrollment.invitation.sentAt || new Date() : new Date() };
+    await collection.updateOne({ ...key, cancelling: { $ne: true } }, { $set: { invitation: state } });
+    return invitationStatus({ invitation: state }, event);
+  } catch (error) {
+    console.error('Google Calendar invitation failed:', error.message);
+    const state = { provider: 'google', status: 'unknown', attemptedAt: new Date() };
+    await collection.updateOne({ ...key, 'invitation.status': { $ne: 'sent' } }, { $set: { invitation: state } });
+    return { status: 'unknown', provider: 'google', checkFailed: true };
+  }
+}
+
+async function removeGuestWithCancellation(db, event, participant) {
+  const key = { eventId: event.id, participantId: participant.id };
+  const enrollment = await db.collection('enrollments').findOneAndUpdate(key, { $set: { cancelling: true } }, { returnDocument: 'after' });
+  if (!enrollment) return false;
+  if (enrollment.invitation?.provider === 'google') {
+    await googleCalendar.removeGuest(event, participant);
+    await db.collection('calendarCancellations').updateOne({ _id: `google-${event.id}-${participant.id}` }, {
+      $set: { eventId: event.id, participantId: participant.id, name: participant.name, provider: 'google', status: 'SENT', createdAt: new Date() }
+    }, { upsert: true });
+  } else await cancelMailInvitation(db, event, participant, enrollment);
   await db.collection('enrollments').deleteOne({ _id: enrollment._id });
   return true;
 }

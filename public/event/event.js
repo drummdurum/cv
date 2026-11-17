@@ -114,6 +114,10 @@ function showInvitation(invitation) {
     unavailable: ''
   };
   document.getElementById('invitation-status').textContent = messages[status] || messages.unknown;
+  if (invitation?.provider === 'google' && status === 'sent') {
+    document.getElementById('invitation-status').textContent = invitation.owner
+      ? 'Aftalen ligger i din Google Kalender som arrangør.' : 'Du er inviteret via Google Kalender. Tjek din kalender eller invitationsmail.';
+  }
   if (invitation?.checkFailed) document.getElementById('invitation-status').textContent += ' Status kunne ikke opdateres lige nu. Prøv at tjekke igen.';
   document.getElementById('check-invitation').textContent = status === 'not_sent' ? 'Prøv at sende invitation' : 'Tjek invitation';
 }

@@ -8,6 +8,7 @@ const http = require('http');
 const events = require('./event/data');
 const { invitationStatus, ensureInvitation, refreshInvitation, removeGuestWithCancellation } = require('./event/invitations');
 const { syncCalendarReplies, getCalendarInvitationStatus } = require('./services/mailService');
+const googleCalendar = require('./services/googleCalendar');
 const { attachVoting } = require('./event/voting');
 const { startGrpcServer, createEchoClient } = require('./event/grpc');
 const { COOKIE, readParticipant, createParticipant } = require('./event/participant');
@@ -185,6 +186,7 @@ const renderEventOverview = async (req, res, invitationReport = null) => {
   quizzes: quizSummaries,
   guestRemovalEnabled,
   invitationReport,
+  googleCalendarEnabled: googleCalendar.enabled(),
   guestNotice: Object.hasOwn(guestRemovalStatus, req.query.guest)
     ? guestRemovalStatus[req.query.guest]
     : ''
@@ -213,14 +215,19 @@ app.post('/event/admin/invitations', async (req, res) => {
   }
   try {
     const operation = req.body.operation || 'check';
-    if (!['check', 'send_missing', 'cancel_event'].includes(operation)) return res.sendStatus(400);
+    if (!['check', 'send_missing', 'send_google', 'cancel_event'].includes(operation)) return res.sendStatus(400);
+    if (operation === 'send_google' && !googleCalendar.enabled()) {
+      report.error = 'Google Kalender skal først tilsluttes på CV-servicen.';
+      return renderEventOverview(req, res, report);
+    }
     const cancelled = await db.collection('eventCancellations').findOne({ _id: event.id });
-    if (operation === 'send_missing' && cancelled) {
+    if (['send_missing', 'send_google'].includes(operation) && cancelled) {
       report.error = 'Eventet er aflyst. Der sendes ikke nye invitationer.';
       return renderEventOverview(req, res, report);
     }
     if (operation === 'cancel_event') {
       await db.collection('eventCancellations').updateOne({ _id: event.id }, { $setOnInsert: { cancelledAt: new Date() } }, { upsert: true });
+      if (googleCalendar.enabled()) await googleCalendar.cancelEvent(event);
       const enrollments = await db.collection('enrollments').find({ eventId: event.id }).toArray();
       let removed = 0, failed = 0;
       for (const enrollment of enrollments) {
@@ -232,7 +239,7 @@ app.post('/event/admin/invitations', async (req, res) => {
       }
       notifyAttendees(event.id);
       report.notice = `Eventet er aflyst. ${removed} tilmeldinger er fjernet med eventuelle kalenderaflysninger i kø. ${failed} kunne ikke behandles; tryk Aflys event igen for at prøve dem igen.`;
-    } else {
+    } else if (!googleCalendar.enabled()) {
       try {
         const sync = await syncCalendarReplies();
         if (sync.status === 'not_configured') report.notice = 'Kalendersvar kræver Gmail OAuth-opsætning. Mailstatus kan stadig tjekkes.';
@@ -251,7 +258,7 @@ app.post('/event/admin/invitations', async (req, res) => {
         const participant = participants.get(enrollment.participantId);
         if (!participant) return { name: 'Ukendt deltager', status: 'unknown', sentAt: null };
         const invitation = await refreshInvitation(db, event, participant);
-        if (operation === 'send_missing' && ['not_sent', 'failed'].includes(invitation.status) && !enrollment.cancelling) {
+        if (((operation === 'send_missing' && ['not_sent', 'failed'].includes(invitation.status)) || operation === 'send_google') && !enrollment.cancelling) {
           const sent = await ensureInvitation(db, event, participant);
           if (['sent', 'queued', 'sending'].includes(sent.status)) submitted++;
           return { name: participant.name, ...sent };
@@ -261,8 +268,10 @@ app.post('/event/admin/invitations', async (req, res) => {
       report.rows.push(...rows);
     }
     if (operation === 'send_missing') report.notice += ` ${submitted} manglende invitationer er sendt eller lagt i kø. Allerede sendte og uafklarede invitationer er sprunget over.`;
+    if (operation === 'send_google') report.notice = `${submitted} deltagere er inviteret eller allerede registreret i Google Kalender. Gamle mailinvitationer er aflyst ved overflytning. Eventuelle fejl vises nedenfor.`;
     const cancellations = await db.collection('calendarCancellations').find({ eventId: event.id }).sort({ createdAt: -1 }).limit(100).toArray();
     for (const item of cancellations) {
+      if (item.provider === 'google') { report.cancellations.push({ name: item.name, status: item.status }); continue; }
       try {
         const state = await getCalendarInvitationStatus(item.requestId);
         report.cancellations.push({ name: item.name, status: state.status });
