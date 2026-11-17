@@ -6,6 +6,7 @@ const { translateHtml } = require('./translations');
 const { sendContactEmails } = require('./services/mailService');
 const http = require('http');
 const events = require('./event/data');
+const { invitationStatus, ensureInvitation, refreshInvitation } = require('./event/invitations');
 const { attachVoting } = require('./event/voting');
 const { startGrpcServer, createEchoClient } = require('./event/grpc');
 const { COOKIE, readParticipant, createParticipant } = require('./event/participant');
@@ -218,9 +219,12 @@ app.get('/event/api/participant', async (req, res) => {
     const participant = cookie ? await db.collection('participants').findOne({ id: cookie.id }) : null;
     const eventId = typeof req.query.event === 'string' ? req.query.event : '';
     const enrolled = participant && isJoinableGame(eventId)
-      ? Boolean(await db.collection('enrollments').findOne({ eventId, participantId: participant.id }))
+      ? await db.collection('enrollments').findOne({ eventId, participantId: participant.id })
       : false;
-    res.json({ participant: participant ? { name: participant.name, email: participant.email } : null, enrolled });
+    res.json({ participant: participant ? { name: participant.name, email: participant.email } : null,
+      enrolled: Boolean(enrolled), invitation: enrolled
+        ? await refreshInvitation(db, events.find(event => event.id === eventId), participant)
+        : invitationStatus(null, events.find(event => event.id === eventId)) });
   } catch (error) {
     console.error('Participant lookup failed:', error);
     res.status(503).json({ error: 'Deltageren kunne ikke hentes.' });
@@ -281,7 +285,8 @@ app.post('/event/api/participant', requireCsrf, async (req, res) => {
         { upsert: true }
       );
       notifyAttendees(eventId);
-      return res.json({ participant: { name: existing.name, email: existing.email }, enrolled: true });
+      const invitation = await ensureInvitation(db, events.find(event => event.id === eventId), existing).catch(() => ({ status: 'unknown' }));
+      return res.json({ participant: { name: existing.name, email: existing.email }, enrolled: true, invitation });
     }
   } catch (error) {
     console.error('Event enrollment failed:', error);
@@ -299,11 +304,29 @@ app.post('/event/api/participant', requireCsrf, async (req, res) => {
     res.cookie(COOKIE, token, { httpOnly: true, secure: req.secure, sameSite: 'lax', maxAge: 365 * 24 * 60 * 60 * 1000, path: '/event' });
     await db.collection('enrollments').insertOne({ eventId, participantId: participant.id, createdAt: new Date() });
     notifyAttendees(eventId);
-    res.status(201).json({ participant: { name, email }, enrolled: true });
+    const invitation = await ensureInvitation(db, events.find(event => event.id === eventId), { ...participant, email }).catch(() => ({ status: 'unknown' }));
+    res.status(201).json({ participant: { name, email }, enrolled: true, invitation });
   } catch (error) {
     if (error.code === 11000) return res.status(409).json({ error: 'Mailadressen findes allerede. Åbn siden i den browser, hvor du først tilmeldte dig.' });
     console.error('Participant registration failed:', error);
     res.status(503).json({ error: 'Tilmeldingen kunne ikke gemmes.' });
+  }
+});
+
+app.post('/event/api/invitation', requireCsrf, async (req, res) => {
+  const db = getDatabase();
+  const cookie = readParticipant(req.headers.cookie);
+  if (!db) return res.status(503).json({ error: 'Eventdatabasen er ikke tilgængelig.' });
+  if (!cookie) return res.status(401).json({ error: 'Tilmeld dig først.' });
+  const event = events.find(item => item.id === req.body.eventId);
+  if (!event) return res.sendStatus(404);
+  try {
+    const participant = await db.collection('participants').findOne({ id: cookie.id });
+    const enrollment = await db.collection('enrollments').findOne({ eventId: event.id, participantId: cookie.id });
+    if (!participant || !enrollment) return res.status(403).json({ error: 'Tilmeld dig dette event først.' });
+    res.json({ invitation: await ensureInvitation(db, event, participant) });
+  } catch {
+    res.status(503).json({ error: 'Invitationens status kunne ikke hentes. Prøv at tjekke igen.' });
   }
 });
 

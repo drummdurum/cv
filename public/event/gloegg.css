@@ -25,6 +25,12 @@
 
 .gloegg-event .detail-body { color: var(--ink); }
 
+.gloegg-event .event-map-link {
+  color: var(--brulee);
+  text-decoration: underline;
+  text-underline-offset: .2em;
+}
+
 .gloegg-event :is(.participate-button, .button, .join-button, .name-form-row button) {
   min-height: 44px;
   border-radius: 999px;

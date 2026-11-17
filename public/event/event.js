@@ -101,7 +101,42 @@ loadAttendees();
 const attendeeStream = new EventSource(`/event/api/attendees/live?event=${encodeURIComponent(eventId)}`);
 attendeeStream.addEventListener('message', () => loadAttendees());
 
-function showParticipant(participant) {
+function showInvitation(invitation) {
+  const status = invitation?.status || 'not_sent';
+  document.getElementById('calendar-invitation').hidden = status === 'unavailable';
+  const messages = {
+    not_sent: 'Kalenderinvitationen er ikke sendt endnu. Du er stadig tilmeldt.',
+    sending: 'Invitationen behandles. Tjek igen om lidt.',
+    queued: 'Invitationen er i kø hos mailservicen. Afsendelse er endnu ikke bekræftet.',
+    sent: 'Kalenderinvitationen er sendt til din mail.',
+    failed: 'Kalenderinvitationen kunne ikke sendes. Du er stadig tilmeldt.',
+    unknown: 'Afsendelsen er ikke bekræftet. Tjek din indbakke og spammappe.',
+    unavailable: ''
+  };
+  document.getElementById('invitation-status').textContent = messages[status] || messages.unknown;
+  if (invitation?.checkFailed) document.getElementById('invitation-status').textContent += ' Status kunne ikke opdateres lige nu. Prøv at tjekke igen.';
+  document.getElementById('check-invitation').textContent = status === 'not_sent' ? 'Prøv at sende invitation' : 'Tjek invitation';
+}
+
+document.getElementById('check-invitation').addEventListener('click', async event => {
+  const button = event.currentTarget;
+  button.disabled = true;
+  try {
+    const token = await getCsrfToken();
+    const response = await fetch('/event/api/invitation', {
+      method: 'POST', headers: { 'Content-Type': 'application/json', 'X-CSRF-Token': token },
+      body: JSON.stringify({ eventId })
+    });
+    const data = await response.json();
+    if (!response.ok) throw new Error(data.error);
+    showInvitation(data.invitation);
+  } catch (error) {
+    document.getElementById('invitation-status').textContent = error.message;
+  } finally { button.disabled = false; }
+});
+
+function showParticipant(participant, invitation) {
+  showInvitation(invitation);
   nameForm.hidden = true;
   document.getElementById('known-participant').hidden = true;
   document.getElementById('participant-display').hidden = false;
@@ -133,7 +168,7 @@ async function loadParticipant() {
     const data = await response.json();
     if (!response.ok) throw new Error(data.error);
     const { participant, enrolled } = data;
-    if (participant && enrolled) showParticipant(participant);
+    if (participant && enrolled) showParticipant(participant, data.invitation);
     else if (participant) showKnownParticipant(participant);
     else document.getElementById('connection-status').textContent = 'Skriv dit navn for at stemme';
   } catch (error) {
@@ -157,7 +192,7 @@ nameForm.addEventListener('submit', async event => {
     const data = await response.json();
     if (!response.ok) throw new Error(data.error);
     csrfToken = null;
-    showParticipant(data.participant);
+    showParticipant(data.participant, data.invitation);
   } catch (error) {
     result.classList.add('error');
     result.textContent = error.message || 'Navnet kunne ikke gemmes.';
@@ -175,7 +210,8 @@ document.getElementById('join-event').addEventListener('click', async () => {
     });
     const data = await response.json();
     if (!response.ok) throw new Error(data.error);
-    showParticipant(data.participant);
+    csrfToken = null;
+    showParticipant(data.participant, data.invitation);
   } catch (error) {
     result.classList.add('error');
     result.textContent = error.message || 'Tilmeldingen kunne ikke gemmes.';

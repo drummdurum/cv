@@ -1,15 +1,16 @@
 const https = require('https');
+const http = require('http');
 const { randomUUID } = require('crypto');
 
-const postJson = (url, apiKey, payload) => new Promise((resolve, reject) => {
-  const body = JSON.stringify(payload);
-  const target = new URL('/emails/contact', `${url.replace(/\/+$/, '')}/`);
-  const request = https.request({
+const postJson = (url, apiKey, payload, endpoint = '/emails/contact', method = 'POST') => new Promise((resolve, reject) => {
+  const body = payload === undefined ? '' : JSON.stringify(payload);
+  const target = new URL(endpoint, `${url.replace(/\/+$/, '')}/`);
+  const request = (target.protocol === 'http:' ? http : https).request({
     protocol: target.protocol,
     hostname: target.hostname,
-    port: target.port || 443,
+    port: target.port || (target.protocol === 'http:' ? 80 : 443),
     path: target.pathname,
-    method: 'POST',
+    method,
     headers: {
       'content-type': 'application/json',
       'content-length': Buffer.byteLength(body),
@@ -35,7 +36,7 @@ const postJson = (url, apiKey, payload) => new Promise((resolve, reject) => {
 
   request.setTimeout(10000, () => request.destroy(new Error('Mailservice timed out')));
   request.on('error', reject);
-  request.write(body);
+  if (body) request.write(body);
   request.end();
 });
 
@@ -64,4 +65,19 @@ const sendContactEmails = async ({ name, email, message }) => {
   });
 };
 
-module.exports = { sendContactEmails };
+const sendCalendarInvitation = async payload => {
+  const endpoint = process.env.MAIL_CALENDAR_ENDPOINT || '/emails/calendar';
+  if (!endpoint || !endpoint.startsWith('/') || endpoint.startsWith('//') || /[?#]/.test(endpoint)) {
+    throw new Error('MAIL_CALENDAR_ENDPOINT skal konfigureres til mailservicens kalenderendepunkt.');
+  }
+  const config = getConfig();
+  return postJson(config.serviceUrl, config.apiKey, payload, endpoint);
+};
+
+const getCalendarInvitationStatus = async requestId => {
+  const config = getConfig();
+  return postJson(config.serviceUrl, config.apiKey, undefined,
+    `/emails/calendar/${encodeURIComponent(requestId)}`, 'GET');
+};
+
+module.exports = { sendContactEmails, sendCalendarInvitation, getCalendarInvitationStatus };

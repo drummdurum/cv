@@ -25,9 +25,11 @@ test('eventformularen afviser POST uden CSRF-token', async ({ page }) => {
   expect(status).toBe(403);
 });
 
-test('WebSocket afviser en fremmed origin', async () => {
+test('WebSocket afviser en fremmed origin', async ({ baseURL }) => {
   const status = await new Promise((resolve, reject) => {
-    const socket = new WebSocket('ws://127.0.0.1:3010/event/ws?event=fredagsbar', { origin: 'https://evil.example' });
+    const url = new URL('/event/ws?event=fredagsbar', baseURL);
+    url.protocol = url.protocol === 'https:' ? 'wss:' : 'ws:';
+    const socket = new WebSocket(url, { origin: 'https://evil.example' });
     socket.on('unexpected-response', (_request, response) => resolve(response.statusCode));
     socket.on('open', () => reject(new Error('Fremmed origin fik adgang')));
     socket.on('error', reject);
